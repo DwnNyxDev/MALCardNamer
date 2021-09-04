@@ -1,0 +1,9 @@
+{
+    "explorer.sortOrder": "type",
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "jna-5.9.0.jar",
+        "jna-platform.jar",
+        "javax.activation-1.2.0.jar"
+    ]
+}
