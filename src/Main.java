@@ -99,6 +99,9 @@ public class Main
                                     if((nextLine.contains("name")||nextLine.contains("Name"))&&!(nextLine.contains("name=")||nextLine.contains("getElementsByTagName"))){
                                         int nameIndex = nextLine.toLowerCase().indexOf("name");
                                         String firstNameLine = nextLine.substring(nameIndex+4);
+                                        if(firstNameLine.indexOf(":")!=-1){
+                                            firstNameLine = firstNameLine.substring(firstNameLine.indexOf(":"));
+                                        }
                                         firstName=firstNameLine.replace("</b>","").replace("<br>","").replace(":","").trim();
                                         if(!firstName.contains("[b]")){
                                             if(firstName.contains(",")){
@@ -118,6 +121,9 @@ public class Main
                                                 if((altLine.contains("name")||altLine.contains("Name"))&&!(altLine.contains("name=")||altLine.contains("getElementsByTagName"))){
                                                     int altIndex = altLine.toLowerCase().indexOf("name");
                                                     String secondNameLine = altLine.substring(altIndex+4);
+                                                    if(secondNameLine.indexOf(":")!=-1){
+                                                        secondNameLine = secondNameLine.substring(secondNameLine.indexOf(":"));
+                                                    }
                                                     secondName=secondNameLine.replace("</b>","").replace("<br>","").replace(":","").trim();
                                                     if(secondName.contains(",")){
                                                         secondName=secondName.substring(0,secondName.indexOf(","));
