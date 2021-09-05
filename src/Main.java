@@ -362,8 +362,7 @@ public class Main
                         tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
-                            InputStream in = getClass().getResourceAsStream("\\rename.jsx");
-                            //File renameTemplate = new File("src\\rename.jsx");
+                            InputStream in = getClass().getResourceAsStream("rename.jsx");
                             File renameFile = new File(scriptsFolder+"\\RenameMalCards.jsx");
                             try{
                                 int fileCounter=2;
@@ -376,6 +375,7 @@ public class Main
                                 boolean addToArray=true;
                                 String newLine = reader.readLine();
                                 while(newLine!=null){
+                                    
                                     if(addToArray || newLine.equals("//start of code")){
                                         renameContents.add(newLine+"\n");
                                         if(newLine.equals("//start of data")){
