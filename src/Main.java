@@ -49,6 +49,9 @@ public class Main
     private static ArrayList<String> savedUsers = new ArrayList<String>();
     private static ArrayList<CardUser> addedUsers = new ArrayList<CardUser>();
     private static File lastOpenLocation;
+    private static boolean useGlobalSettings;
+    private static int globalCLimit;
+    private static String globalReplaceString;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -59,6 +62,9 @@ public class Main
         psdSettingsPanel = new JPanel(new FlowLayout());
         userPanel = new JPanel(new FlowLayout());
         listedUsersPanel = new JPanel(new GridLayout(4,4));
+
+        globalCLimit = 20;
+        globalReplaceString = "Name";
         
         frame = new JFrame("MALCardNamer");
         frame.setIconImage(new ImageIcon("MAL_Logo.png").getImage());
@@ -425,10 +431,9 @@ public class Main
                             InputStream in = getClass().getResourceAsStream("rename.jsx");
                             File renameFile = new File(scriptsFolder+"\\RenameMalCards.jsx");
                             try{
-                                int fileCounter=2;
-                                while(!renameFile.createNewFile()){
-                                    renameFile = new File(scriptsFolder+"\\RenameMalCards"+fileCounter+".jsx");
-                                    fileCounter++;
+                                if(!renameFile.createNewFile()){
+                                    renameFile.delete();
+                                    renameFile.createNewFile();
                                 }
                                 ArrayList<String> renameContents = new ArrayList<String>();
                                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -472,7 +477,13 @@ public class Main
                                 data.add("var psds = {\n");
                                 for(int p=0; p<psds.size(); p++){
                                     PsdButton psd = psds.get(p);
-                                    String psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
+                                    String psdInput;
+                                    if(!useGlobalSettings){
+                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
+                                    }
+                                    else{
+                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+globalCLimit+",'replace':'"+globalReplaceString+"'";
+                                    }
                                     psdInput+="},\n";
                                     data.add(psdInput);
                                 }
@@ -502,7 +513,82 @@ public class Main
         m1.add(m12);
         m1.add(m11);
         m1.add(m13);
+        JMenu m2 = new JMenu("Global");
+        JCheckBox useGlobal = new JCheckBox("Use Global Settings?");
+        TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
+        textBorder.setTitleJustification(TitledBorder.CENTER);
+        JTextField cLimitText = new JTextField(9);
+        cLimitText.setEditable(false);
+        cLimitText.setBackground(psdSettingsPanel.getBackground());
+        cLimitText.setHorizontalAlignment(JTextField.CENTER);
+        cLimitText.setBorder(textBorder);
+        cLimitText.setText(String.valueOf(globalCLimit));
+        cLimitText.addFocusListener(new FocusListener(){
+            public void focusGained(FocusEvent f){
+                if(cLimitText.isEditable()){
+                    cLimitText.setText("");
+                }
+            }
+            public void focusLost(FocusEvent f){
+                if(cLimitText.isEditable()){
+                    try{
+                        int cLimit = Integer.valueOf(cLimitText.getText());
+                        globalCLimit= cLimit;
+                    } catch(NumberFormatException e){
+                        cLimitText.setText(String.valueOf(globalCLimit));
+                    }
+                }
+            }
+        });
+
+        textBorder = BorderFactory.createTitledBorder("replace");
+        textBorder.setTitleJustification(TitledBorder.CENTER);
+        JTextField replaceText = new JTextField(9);
+        replaceText.setEditable(false);
+        replaceText.setBackground(psdSettingsPanel.getBackground());
+        replaceText.setHorizontalAlignment(JTextField.CENTER);
+        replaceText.setBorder(textBorder);
+        replaceText.setText(globalReplaceString);
+        replaceText.addFocusListener(new FocusListener(){
+            public void focusGained(FocusEvent f){
+                if(replaceText.isEditable()){
+                    replaceText.setText("");
+                }
+            }
+            public void focusLost(FocusEvent f){
+                if(replaceText.isEditable()){
+                    if(replaceText.getText().length()==0){
+                        replaceText.setText(globalReplaceString);
+                    }
+                    else{
+                        globalReplaceString=replaceText.getText();
+                    }
+                }
+            }
+        });
+        useGlobal.addItemListener(new ItemListener(){
+            public void itemStateChanged(ItemEvent i){
+                if(i.getStateChange()==ItemEvent.SELECTED){
+                    useGlobalSettings=true;
+                    cLimitText.setEditable(true);
+                    replaceText.setEditable(true);
+                    frame.validate();
+                    frame.repaint();
+                }
+                else{
+                    useGlobalSettings=false;
+                    cLimitText.setEditable(false);
+                    replaceText.setEditable(false);
+                    frame.validate();
+                    frame.repaint();
+                }
+            }
+        });
+        m2.add(useGlobal);
+        m2.add(cLimitText);
+        m2.add(replaceText);
         mb.add(m1);
+        mb.add(m2);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBounds(0,0,frame.getWidth(),frame.getHeight());
