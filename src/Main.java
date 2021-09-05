@@ -424,7 +424,7 @@ public class Main
                         }
                     }
                     if(atleastOne){
-                        JFileChooser tempSaver = new JFileChooser();
+                        JFileChooser tempSaver = new JFileChooser(System.getProperty("user.dir"));
                         tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
