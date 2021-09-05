@@ -6,6 +6,7 @@ import javax.swing.event.ListSelectionListener;
 import java.io.*;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.util.Scanner;
 import java.awt.Toolkit;
 import java.awt.Dimension;
@@ -361,7 +362,8 @@ public class Main
                         tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
-                            File renameTemplate = new File("src\\rename.jsx");
+                            InputStream in = getClass().getResourceAsStream("\\rename.jsx");
+                            //File renameTemplate = new File("src\\rename.jsx");
                             File renameFile = new File(scriptsFolder+"\\RenameMalCards.jsx");
                             try{
                                 int fileCounter=2;
@@ -370,10 +372,10 @@ public class Main
                                     fileCounter++;
                                 }
                                 ArrayList<String> renameContents = new ArrayList<String>();
-                                Scanner cmdScanner = new Scanner(renameTemplate,"UTF-8");
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                                 boolean addToArray=true;
-                                while(cmdScanner.hasNextLine()){
-                                    String newLine = cmdScanner.nextLine();
+                                String newLine = reader.readLine();
+                                while(newLine!=null){
                                     if(addToArray || newLine.equals("//start of code")){
                                         renameContents.add(newLine+"\n");
                                         if(newLine.equals("//start of data")){
@@ -383,8 +385,9 @@ public class Main
                                             addToArray=true;
                                         }
                                     }
+                                    newLine=reader.readLine();
                                 }
-                                cmdScanner.close();
+                                reader.close();
                                 ArrayList<String> data = new ArrayList<String>();
                                 data.add("var users = {\n");
                                 for(int i=0; i<addedUsers.size(); i++){
