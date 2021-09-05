@@ -355,7 +355,7 @@ public class Main
                         tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
-                            File renameTemplate = new File("rename.jsx");
+                            File renameTemplate = new File("src\\rename.jsx");
                             File renameFile = new File(scriptsFolder+"\\RenameMalCards.jsx");
                             try{
                                 int fileCounter=2;
@@ -364,7 +364,7 @@ public class Main
                                     fileCounter++;
                                 }
                                 ArrayList<String> renameContents = new ArrayList<String>();
-                                Scanner cmdScanner = new Scanner(renameTemplate);
+                                Scanner cmdScanner = new Scanner(renameTemplate,"UTF-8");
                                 boolean addToArray=true;
                                 while(cmdScanner.hasNextLine()){
                                     String newLine = cmdScanner.nextLine();
@@ -423,7 +423,7 @@ public class Main
                                 JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
                             } 
                             catch(IOException e){
-
+                                JOptionPane.showMessageDialog(frame, e, "Error", JOptionPane.ERROR_MESSAGE);
                             }
                         }
                     }
