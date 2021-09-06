@@ -182,7 +182,29 @@ public class Main
                                                 else{
                                                     String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
                                                     if(psd.altName.length()>0){
-                                                        if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
+                                                        if(isNumber(psd.altName)){
+                                                            ArrayList<String> numsInLine = new ArrayList<String>();
+                                                            for(int start=0; start<nextLine.length(); start++){
+                                                                if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                                    String newNum="";
+                                                                    int end=start+1;
+                                                                    int endIndex=0;
+                                                                    while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                        endIndex++;
+                                                                    }
+                                                                    newNum=nextLine.substring(start, end+endIndex);
+                                                                    numsInLine.add(newNum);
+                                                                    start=end;
+                                                                }
+                                                            }
+                                                            if(numsInLine.contains(psd.altName)){
+                                                                if(!newUser.cards.contains(psd)){
+                                                                    newUser.cards.add(psd);
+                                                                    newUser.model.addElement(psd.name);
+                                                                }
+                                                            }
+                                                        }
+                                                        else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
                                                             if(!newUser.cards.contains(psd)){
                                                                 newUser.cards.add(psd);
                                                                 newUser.model.addElement(psd.name);
@@ -246,6 +268,14 @@ public class Main
                                                         }
                                                         fromIndex=nextLine.indexOf(base,fromIndex)+1;
                                                     }
+                                                }
+                                            }
+                                        }
+                                        if(nextLine.contains("all")){
+                                            for(PsdButton psd: psds){
+                                                if(!newUser.cards.contains(psd)){
+                                                    newUser.cards.add(psd);
+                                                    newUser.model.addElement(psd.name);
                                                 }
                                             }
                                         }
@@ -879,6 +909,16 @@ public class Main
         } catch(IOException e){
             System.out.println("Something went wrong. >-<");
         }       
+    }
+
+    private static boolean isNumber(String s){
+        try{
+            Integer.parseInt(s);
+            return true;
+        }
+        catch (NumberFormatException e){
+            return false;
+        }
     }
 
     private  static void saveUsers(){
