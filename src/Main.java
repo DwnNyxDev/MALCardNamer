@@ -171,7 +171,29 @@ public class Main
                                                 }
                                             }
                                             else if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
-                                                if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
+                                                if(isNumber(psd.name)){
+                                                    ArrayList<String> numsInLine = new ArrayList<String>();
+                                                    for(int start=0; start<nextLine.length(); start++){
+                                                        if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                            String newNum="";
+                                                            int end=start+1;
+                                                            int endIndex=0;
+                                                            while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                endIndex++;
+                                                            }
+                                                            newNum=nextLine.substring(start, end+endIndex);
+                                                            numsInLine.add(newNum);
+                                                            start=end;
+                                                        }
+                                                    }
+                                                    if(numsInLine.contains(psd.altName)){
+                                                        if(!newUser.cards.contains(psd)){
+                                                            newUser.cards.add(psd);
+                                                            newUser.model.addElement(psd.name);
+                                                        }
+                                                    }
+                                                }
+                                                else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
                                                     if(!newUser.cards.contains(psd)){
                                                         newUser.cards.add(psd);
                                                         newUser.model.addElement(psd.name);
