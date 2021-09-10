@@ -43,8 +43,6 @@ public class Main
     private static JPanel buttonPanel;
     private static JPanel psdSettingsPanel;
     private static JPanel userPanel;
-    private static Process startProcess;
-    private static Process photoProcess;
     private static JPanel listedUsersPanel;
     private static ArrayList<String> savedUsers = new ArrayList<String>();
     private static ArrayList<CardUser> addedUsers = new ArrayList<CardUser>();
@@ -61,7 +59,7 @@ public class Main
         buttonPanel = new JPanel(new GridLayout(0,10));
         psdSettingsPanel = new JPanel(new FlowLayout());
         userPanel = new JPanel(new FlowLayout());
-        listedUsersPanel = new JPanel(new GridLayout(4,4));
+        listedUsersPanel = new JPanel(new GridLayout(4,0));
 
         globalCLimit = 20;
         globalReplaceString = "Name";
@@ -233,7 +231,6 @@ public class Main
                                             }
                                             if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
                                                 for(String base : basePSDs){
-                                                    
                                                     int fromIndex=0;
                                                     while(nextLine.indexOf(base,fromIndex)!=-1){
                                                         ArrayList<String> nums = new ArrayList<String>();
@@ -269,13 +266,13 @@ public class Main
                                                         fromIndex=nextLine.indexOf(base,fromIndex)+1;
                                                     }
                                                 }
-                                            }
-                                        }
-                                        if(nextLine.contains("all")){
-                                            for(PsdButton psd: psds){
-                                                if(!newUser.cards.contains(psd)){
-                                                    newUser.cards.add(psd);
-                                                    newUser.model.addElement(psd.name);
+                                                if(nextLine.contains("all")){
+                                                    for(PsdButton psd: psds){
+                                                        if(!newUser.cards.contains(psd)){
+                                                            newUser.cards.add(psd);
+                                                            newUser.model.addElement(psd.name);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -528,7 +525,6 @@ public class Main
                                 for(String line: renameContents){
                                     cmdWriter.write(line);
                                 }
-                                cmdWriter.write("new File('"+renameFile.getAbsolutePath().replace("\\","\\\\")+"').remove()");
                                 cmdWriter.close(); 
                                 JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
                             } 
@@ -949,6 +945,16 @@ public class Main
             nameBorder.setTitleJustification(TitledBorder.CENTER);
             userPanel.setBorder(nameBorder);
             listedUsersPanel.add(userPanel);
+            userPanel.addMouseListener(new MouseAdapter(){
+                public void mousePressed(MouseEvent m){
+                    if(SwingUtilities.isRightMouseButton(m)){
+                        addedUsers.remove(userPanel);
+                        listedUsersPanel.remove(userPanel);
+                        frame.validate();
+                        frame.repaint();
+                    }
+                }
+            });
             frame.validate();
             frame.repaint();
             return userPanel;
@@ -960,6 +966,16 @@ public class Main
             nameBorder.setTitleJustification(TitledBorder.CENTER);
             userPanel.setBorder(nameBorder);
             listedUsersPanel.add(userPanel);
+            userPanel.addMouseListener(new MouseAdapter(){
+                public void mousePressed(MouseEvent m){
+                    if(SwingUtilities.isRightMouseButton(m)){
+                        addedUsers.remove(userPanel);
+                        listedUsersPanel.remove(userPanel);
+                        frame.validate();
+                        frame.repaint();
+                    }
+                }
+            });
             frame.validate();
             frame.repaint();
             return userPanel;
