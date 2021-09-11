@@ -13,10 +13,15 @@ import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.awt.GridLayout;
 import java.util.Collections;
+import java.util.List;
+
 import javax.swing.SwingUtilities;
 import java.awt.Image;
 
@@ -161,104 +166,29 @@ public class Main
                                 }
                                 else if(searchForCards){
                                     if(newUser!=null){
-                                        for(PsdButton psd : psds){
-                                            if(cardMaker==null||cardMaker.length()==0){
-                                                if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
-                                                    if(!newUser.cards.contains(psd)){
-                                                        newUser.cards.add(psd);
-                                                        newUser.model.addElement(psd.name);
-                                                    }
+                                        if(nextLine.toLowerCase().contains("all")){
+                                            for(PsdButton psd: psds){
+                                                if(!newUser.cards.contains(psd)){
+                                                    newUser.cards.add(psd);
+                                                    newUser.model.addElement(psd.name);
                                                 }
                                             }
-                                            else if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
-                                                if(isNumber(psd.name)){
-                                                    ArrayList<String> numsInLine = new ArrayList<String>();
-                                                    for(int start=0; start<nextLine.length(); start++){
-                                                        if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
-                                                            String newNum="";
-                                                            int end=start+1;
-                                                            int endIndex=0;
-                                                            while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                endIndex++;
-                                                            }
-                                                            newNum=nextLine.substring(start, end+endIndex);
-                                                            numsInLine.add(newNum);
-                                                            start=end;
-                                                        }
-                                                    }
-                                                    if(numsInLine.contains(psd.altName)){
+                                        }
+                                        else{
+                                            for(PsdButton psd : psds){
+                                                if(cardMaker==null||cardMaker.length()==0){
+                                                    if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
                                                         if(!newUser.cards.contains(psd)){
                                                             newUser.cards.add(psd);
                                                             newUser.model.addElement(psd.name);
                                                         }
                                                     }
                                                 }
-                                                else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
-                                                    if(!newUser.cards.contains(psd)){
-                                                        newUser.cards.add(psd);
-                                                        newUser.model.addElement(psd.name);
-                                                    }
-                                                }
-                                                else{
-                                                    String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
-                                                    if(psd.altName.length()>0){
-                                                        if(isNumber(psd.altName)){
-                                                            ArrayList<String> numsInLine = new ArrayList<String>();
-                                                            for(int start=0; start<nextLine.length(); start++){
-                                                                if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
-                                                                    String newNum="";
-                                                                    int end=start+1;
-                                                                    int endIndex=0;
-                                                                    while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                        endIndex++;
-                                                                    }
-                                                                    newNum=nextLine.substring(start, end+endIndex);
-                                                                    numsInLine.add(newNum);
-                                                                    start=end;
-                                                                }
-                                                            }
-                                                            if(numsInLine.contains(psd.altName)){
-                                                                if(!newUser.cards.contains(psd)){
-                                                                    newUser.cards.add(psd);
-                                                                    newUser.model.addElement(psd.name);
-                                                                }
-                                                            }
-                                                        }
-                                                        else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
-                                                            if(!newUser.cards.contains(psd)){
-                                                                newUser.cards.add(psd);
-                                                                newUser.model.addElement(psd.name);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        if(cardMaker!=null&&cardMaker.length()>0){
-                                            ArrayList<String> basePSDs = new ArrayList<String>();
-                                            for(PsdButton psd : psds){
-                                                int index=1;
-                                                String endNumber="";
-                                                String psdName = psd.name.replace(".psd","");
-                                                while(Character.isDigit(psdName.charAt(psdName.length()-index))){
-                                                    endNumber+=psdName.charAt(psdName.length()-index);
-                                                    index++;
-                                                }
-                                                if(endNumber.length()>0){
-                                                    String basePSD = psdName.substring(0, psdName.length()-endNumber.length());
-                                                    if(!basePSDs.contains(basePSD)){
-                                                        basePSDs.add(basePSD);
-                                                    }
-                                                }
-                                            }
-                                            if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
-                                                for(String base : basePSDs){
-                                                    int fromIndex=0;
-                                                    while(nextLine.indexOf(base,fromIndex)!=-1){
-                                                        ArrayList<String> nums = new ArrayList<String>();
-                                                        for(int start=nextLine.indexOf(base,fromIndex)+base.length(); start<nextLine.length(); start++){
-                                                            if(Character.isDigit(nextLine.charAt(start))){
-                                                                
+                                                else if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
+                                                    if(isNumber(psd.name.replace(".psd",""))){
+                                                        ArrayList<String> numsInLine = new ArrayList<String>();
+                                                        for(int start=0; start<nextLine.length(); start++){
+                                                            if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
                                                                 String newNum="";
                                                                 int end=start+1;
                                                                 int endIndex=0;
@@ -266,33 +196,111 @@ public class Main
                                                                     endIndex++;
                                                                 }
                                                                 newNum=nextLine.substring(start, end+endIndex);
-                                                                nums.add(newNum);
+                                                                numsInLine.add(newNum);
                                                                 start=end;
                                                             }
-                                                            else if(Character.isLetter(nextLine.charAt(start))){
-                                                                break;
+                                                        }
+                                                        if(numsInLine.contains(psd.name.replace(".psd",""))){
+                                                            if(!newUser.cards.contains(psd)){
+                                                                newUser.cards.add(psd);
+                                                                newUser.model.addElement(psd.name);
                                                             }
                                                         }
-                                                        for(String num : nums){
-                                                            String newName = base+num;
-                                                            for(PsdButton psd: psds){
-                                                                String psdName = psd.name.replace(".psd","");
-                                                                if(psdName.equals(newName)){
+                                                    }
+                                                    else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
+                                                        if(!newUser.cards.contains(psd)){
+                                                            newUser.cards.add(psd);
+                                                            newUser.model.addElement(psd.name);
+                                                        }
+                                                    }
+                                                    else{
+                                                        String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
+                                                        if(psd.altName.length()>0){
+                                                            if(isNumber(psd.altName)){
+                                                                ArrayList<String> numsInLine = new ArrayList<String>();
+                                                                for(int start=0; start<nextLine.length(); start++){
+                                                                    if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                                        String newNum="";
+                                                                        int end=start+1;
+                                                                        int endIndex=0;
+                                                                        while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                            endIndex++;
+                                                                        }
+                                                                        newNum=nextLine.substring(start, end+endIndex);
+                                                                        numsInLine.add(newNum);
+                                                                        start=end;
+                                                                    }
+                                                                }
+                                                                if(numsInLine.contains(psd.altName)){
                                                                     if(!newUser.cards.contains(psd)){
                                                                         newUser.cards.add(psd);
                                                                         newUser.model.addElement(psd.name);
                                                                     }
                                                                 }
                                                             }
+                                                            else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
+                                                                if(!newUser.cards.contains(psd)){
+                                                                    newUser.cards.add(psd);
+                                                                    newUser.model.addElement(psd.name);
+                                                                }
+                                                            }
                                                         }
-                                                        fromIndex=nextLine.indexOf(base,fromIndex)+1;
                                                     }
                                                 }
-                                                if(nextLine.contains("all")){
-                                                    for(PsdButton psd: psds){
-                                                        if(!newUser.cards.contains(psd)){
-                                                            newUser.cards.add(psd);
-                                                            newUser.model.addElement(psd.name);
+                                            }
+                                            if(cardMaker!=null&&cardMaker.length()>0){
+                                                ArrayList<String> basePSDs = new ArrayList<String>();
+                                                for(PsdButton psd : psds){
+                                                    int index=1;
+                                                    String endNumber="";
+                                                    String psdName = psd.name.replace(".psd","");
+                                                    if(!isNumber(psdName)){
+                                                        while(psdName.length()-index>=0&&Character.isDigit(psdName.charAt(psdName.length()-index))){
+                                                            endNumber+=psdName.charAt(psdName.length()-index);
+                                                            index++;
+                                                        }
+                                                        if(endNumber.length()>0){
+                                                            String basePSD = psdName.substring(0, psdName.length()-endNumber.length());
+                                                            if(!basePSDs.contains(basePSD)){
+                                                                basePSDs.add(basePSD);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
+                                                    for(String base : basePSDs){
+                                                        int fromIndex=0;
+                                                        while(nextLine.indexOf(base,fromIndex)!=-1){
+                                                            ArrayList<String> nums = new ArrayList<String>();
+                                                            for(int start=nextLine.indexOf(base,fromIndex)+base.length(); start<nextLine.length(); start++){
+                                                                if(Character.isDigit(nextLine.charAt(start))){
+                                                                    String newNum="";
+                                                                    int end=start+1;
+                                                                    int endIndex=0;
+                                                                    while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                        endIndex++;
+                                                                    }
+                                                                    newNum=nextLine.substring(start, end+endIndex);
+                                                                    nums.add(newNum);
+                                                                    start=end;
+                                                                }
+                                                                else if(Character.isLetter(nextLine.charAt(start))){
+                                                                    break;
+                                                                }
+                                                            }
+                                                            for(String num : nums){
+                                                                String newName = base+num;
+                                                                for(PsdButton psd: psds){
+                                                                    String psdName = psd.name.replace(".psd","");
+                                                                    if(psdName.equals(newName)){
+                                                                        if(!newUser.cards.contains(psd)){
+                                                                            newUser.cards.add(psd);
+                                                                            newUser.model.addElement(psd.name);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                            fromIndex=nextLine.indexOf(base,fromIndex)+1;
                                                         }
                                                     }
                                                 }
@@ -322,14 +330,33 @@ public class Main
         JMenuItem m12= new JMenuItem("Open PSDs");
         m12.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                JFileChooser psdSelector = new JFileChooser(System.getProperty("user.dir"));
+                final JFileChooser psdSelecter = new JFileChooser(System.getProperty("user.dir"));
                 if(lastOpenLocation!=null){
-                    psdSelector = new JFileChooser(lastOpenLocation);
+                    psdSelecter.setCurrentDirectory(lastOpenLocation);
                 }
-                psdSelector.setMultiSelectionEnabled(true);
-                psdSelector.setFileFilter(new FileNameExtensionFilter("Photoshop Projects","psd"));
-                if(psdSelector.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
-                    File[] psdFiles  = psdSelector.getSelectedFiles();
+                psdSelecter.setMultiSelectionEnabled(true);
+                psdSelecter.setFileFilter(new FileNameExtensionFilter("Photoshop Projects","psd"));
+                ArrayList<File> chosenFiles = new ArrayList<File>();
+                psdSelecter.addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY,new PropertyChangeListener(){
+                    public void propertyChange(PropertyChangeEvent pc){
+                        List<File> selected = Arrays.asList(psdSelecter.getSelectedFiles());
+                        for(File chosen : chosenFiles){
+                            if(!selected.contains(chosen)){
+                                chosenFiles.remove(chosen);
+                            }
+                        }
+                        for(File select: selected){
+                            if(!chosenFiles.contains(select)){
+                                chosenFiles.add(select);
+                            }
+                        }
+                    }
+                });
+                if(psdSelecter.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
+                    File[] psdFiles  = new File[chosenFiles.size()];
+                    for(int f=0; f<chosenFiles.size(); f++){
+                        psdFiles[f]=chosenFiles.get(f);
+                    }
                     lastOpenLocation = psdFiles[0].getParentFile();
                     for(int i=0; i<psdFiles.length; i++){
                         boolean alreadyExists=false;

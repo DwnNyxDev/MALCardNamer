@@ -39,7 +39,7 @@ public class CardUser extends JPanel {
                 }
             }
         });
-        JScrollPane cardScroller = new JScrollPane(cardList,JScrollPane.VERTICAL_SCROLLBAR_NEVER,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane cardScroller = new JScrollPane(cardList,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.setLayout(new BorderLayout());
         this.add(BorderLayout.CENTER,cardScroller);
     }
@@ -64,7 +64,7 @@ public class CardUser extends JPanel {
                 }
             }
         });
-        JScrollPane cardScroller = new JScrollPane(cardList,JScrollPane.VERTICAL_SCROLLBAR_NEVER,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane cardScroller = new JScrollPane(cardList,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.setLayout(new BorderLayout());
         this.add(BorderLayout.CENTER,cardScroller);
     }
