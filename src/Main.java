@@ -6,6 +6,7 @@ import javax.swing.event.ListSelectionListener;
 import java.io.*;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.DefaultStyledDocument.ElementSpec;
 
 import java.util.Scanner;
 import java.awt.Toolkit;
@@ -1255,6 +1256,29 @@ public class Main
                 }
             });
             done.setEnabled(false);
+            path.getDocument().addDocumentListener(new DocumentListener(){
+                public void changedUpdate(DocumentEvent d){
+
+                }
+                public void insertUpdate(DocumentEvent d){
+                    if(path.getText().endsWith("Scripts")){
+                        done.setEnabled(true);
+                        scriptsFolder=new File(path.getText());
+                    }
+                    else if(scriptsFolder==null){
+                        done.setEnabled(false);
+                    }
+                }
+                public void removeUpdate(DocumentEvent d){
+                    if(path.getText().endsWith("Scripts")){
+                        done.setEnabled(true);
+                        scriptsFolder=new File(path.getText());
+                    }
+                    else if(scriptsFolder==null){
+                        done.setEnabled(false);
+                    }
+                }
+            });
             
             JButton test = new JButton("Search");
             test.addActionListener(new ActionListener(){
@@ -1270,14 +1294,19 @@ public class Main
             select.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent a){
                     JFileChooser pathChooser = new JFileChooser();
-                    if(photoFile!=null){
-                        pathChooser.setCurrentDirectory(photoFile.getParentFile().getParentFile());
+                    if(scriptsFolder!=null){
+                        if(scriptsFolder.getParentFile()!=null){
+                            pathChooser.setCurrentDirectory(scriptsFolder.getParentFile().getParentFile());
+                        }
                     }
-                    pathChooser.setFileFilter(new PhotoshopFileFilter());
+                    pathChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                     if(pathChooser.showOpenDialog(dialog)==JFileChooser.APPROVE_OPTION){
                         String getPath = pathChooser.getSelectedFile().getAbsolutePath();
-                        path.setText(getPath);
-                        photoFile = new File(getPath);
+                        File f = new File(getPath);
+                        if(f.getName().equals("Scripts")){
+                            path.setText(getPath);
+                            scriptsFolder=f;
+                        }
                         done.setEnabled(true);
                     };
                 }
