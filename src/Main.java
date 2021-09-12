@@ -55,6 +55,9 @@ public class Main
     private static boolean useGlobalSettings;
     private static int globalCLimit;
     private static String globalReplaceString;
+    private static boolean ctrlHeld;
+    private static boolean shiftHeld;
+    private static int lastSelectedIndex = 0;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -68,6 +71,9 @@ public class Main
 
         globalCLimit = 20;
         globalReplaceString = "Name";
+
+        ctrlHeld = false;
+        shiftHeld=false;
         
         frame = new JFrame("MALCardNamer");
         frame.setIconImage(new ImageIcon("MAL_Logo.png").getImage());
@@ -367,81 +373,198 @@ public class Main
                         }
                         if(!alreadyExists){
                             PsdButton tempBtn = new PsdButton(psdFiles[i]);
+                            tempBtn.setFocusable(false);
                             tempBtn.addActionListener(new ActionListener(){
                                 public void actionPerformed(ActionEvent a){
-                                    JLabel psdLabel = new JLabel(tempBtn.name+": ",JLabel.RIGHT);
+                                    frame.requestFocusInWindow();
+                                    psdSettingsPanel.removeAll();
+                                    psdSettingsPanel.setVisible(false);
                                     if(tempBtn.selected){
                                         tempBtn.setBackground(null);
                                         tempBtn.selected=false;
                                     }
                                     else if(!tempBtn.selected){
-                                        tempBtn.setBackground(Color.cyan);
-                                        tempBtn.selected=true;
-                                    }
-                                    psdSettingsPanel.removeAll();
-                                    TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
-                                    textBorder.setTitleJustification(TitledBorder.CENTER);
-                                    JTextField cLimitText = new JTextField(9);
-                                    cLimitText.setBackground(psdSettingsPanel.getBackground());
-                                    cLimitText.setHorizontalAlignment(JTextField.CENTER);
-                                    cLimitText.setBorder(textBorder);
-                                    cLimitText.setText(String.valueOf(tempBtn.charLimit));
-                                    cLimitText.addFocusListener(new FocusListener(){
-                                        public void focusGained(FocusEvent f){
-                                            cLimitText.setText("");
-                                        }
-                                        public void focusLost(FocusEvent f){
-                                            try{
-                                                int cLimit = Integer.valueOf(cLimitText.getText());
-                                                tempBtn.charLimit= cLimit;
-                                            } catch(NumberFormatException e){
-                                                cLimitText.setText(String.valueOf(tempBtn.charLimit));
+                                        if(!ctrlHeld){
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected){
+                                                    psd.setBackground(null);
+                                                    psd.selected=false;
+                                                }
                                             }
                                         }
-                                    });
-
-                                    textBorder = BorderFactory.createTitledBorder("altName");
-                                    textBorder.setTitleJustification(TitledBorder.CENTER);
-                                    JTextField altNameText = new JTextField(9);
-                                    altNameText.setBackground(psdSettingsPanel.getBackground());
-                                    altNameText.setHorizontalAlignment(JTextField.CENTER);
-                                    altNameText.setBorder(textBorder);
-                                    altNameText.setText(tempBtn.altName);
-                                    altNameText.addFocusListener(new FocusListener(){
-                                        public void focusGained(FocusEvent f){
-                                            altNameText.setText("");
-                                        }
-                                        public void focusLost(FocusEvent f){
-                                            tempBtn.altName=altNameText.getText();
-                                        }
-                                    });
-
-                                    textBorder = BorderFactory.createTitledBorder("replace");
-                                    textBorder.setTitleJustification(TitledBorder.CENTER);
-                                    JTextField replaceText = new JTextField(9);
-                                    replaceText.setBackground(psdSettingsPanel.getBackground());
-                                    replaceText.setHorizontalAlignment(JTextField.CENTER);
-                                    replaceText.setBorder(textBorder);
-                                    replaceText.setText(tempBtn.replaceString);
-                                    replaceText.addFocusListener(new FocusListener(){
-                                        public void focusGained(FocusEvent f){
-                                            replaceText.setText("");
-                                        }
-                                        public void focusLost(FocusEvent f){
-                                            if(replaceText.getText().length()==0){
-                                                replaceText.setText(tempBtn.replaceString);
+                                        int currIndex = psds.indexOf(tempBtn);
+                                        if(shiftHeld){
+                                            if(currIndex<lastSelectedIndex){
+                                                for(int i=currIndex; i<=lastSelectedIndex; i++){
+                                                    psds.get(i).selected=true;
+                                                    psds.get(i).setBackground(Color.cyan);
+                                                }
                                             }
                                             else{
-                                                tempBtn.replaceString=replaceText.getText();
+                                                for(int i=lastSelectedIndex; i<=currIndex; i++){
+                                                    psds.get(i).selected=true;
+                                                    psds.get(i).setBackground(Color.cyan);
+                                                }
                                             }
                                         }
-                                    });
+                                        tempBtn.setBackground(Color.cyan);
+                                        tempBtn.selected=true;
+                                        lastSelectedIndex=currIndex;
+                                    }
+                                    ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
+                                    for(PsdButton psd : psds){
+                                        if(psd.selected){
+                                            selectedPsds.add(psd);
+                                        }
+                                    }
+                                    if(selectedPsds.size()>0){
+                                        JLabel psdLabel = null;
+                                        if(selectedPsds.size()<=3){
+                                            String psdNames = "";
+                                            for(int i=0; i<selectedPsds.size(); i++){
+                                                PsdButton indexPsd = selectedPsds.get(i);
+                                                if(i<selectedPsds.size()-1){
+                                                    psdNames+=indexPsd.name+",";
+                                                }
+                                                else{
+                                                    psdNames+=indexPsd.name;
+                                                }
+                                            }
+                                            psdLabel = new JLabel(psdNames+": ",JLabel.RIGHT);
+                                        }
+                                        else{
+                                            String psdNames = "";
+                                            for(int i=0; i<3; i++){
+                                                PsdButton indexPsd = selectedPsds.get(i);
+                                                if(i<2){
+                                                    psdNames+=indexPsd.name+",";
+                                                }
+                                                else{
+                                                    psdNames+=indexPsd.name;
+                                                }
+                                            }
+                                            String lastPsdName = selectedPsds.get(selectedPsds.size()-1).name;
+                                            psdLabel = new JLabel(psdNames+"..."+lastPsdName+": ",JLabel.RIGHT);
+                                        }
 
-                                    psdSettingsPanel.add(psdLabel);
-                                    psdSettingsPanel.add(cLimitText);
-                                    psdSettingsPanel.add(altNameText);
-                                    psdSettingsPanel.add(replaceText);
-                                    psdPanel.add(BorderLayout.SOUTH,psdSettingsPanel);
+                                        TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
+                                        textBorder.setTitleJustification(TitledBorder.CENTER);
+                                        JTextField cLimitText = new JTextField(9);
+                                        cLimitText.setBackground(psdSettingsPanel.getBackground());
+                                        cLimitText.setHorizontalAlignment(JTextField.CENTER);
+                                        cLimitText.setBorder(textBorder);
+                                        boolean sameLimit=true;
+                                        for(PsdButton psd : psds){
+                                            if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
+                                                sameLimit=false;
+                                            }
+                                        }
+                                        if(sameLimit){
+                                            cLimitText.setText(String.valueOf(tempBtn.charLimit));
+                                        }
+                                        cLimitText.addFocusListener(new FocusListener(){
+                                            public void focusGained(FocusEvent f){
+                                                cLimitText.setText("");
+                                            }
+                                            public void focusLost(FocusEvent f){
+                                                try{
+                                                    int cLimit = Integer.valueOf(cLimitText.getText());
+                                                    for(PsdButton psd : psds){
+                                                        if(psd.selected){   
+                                                            psd.charLimit= cLimit;
+                                                        }
+                                                    }
+                                                } catch(NumberFormatException e){
+                                                    boolean sameLimit=true;
+                                                    for(PsdButton psd : psds){
+                                                        if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
+                                                            sameLimit=false;
+                                                        }
+                                                    }
+                                                    if(sameLimit){
+                                                        cLimitText.setText(String.valueOf(tempBtn.charLimit));
+                                                    }
+                                                    else{
+                                                        cLimitText.setText("");
+                                                    }
+                                                }
+                                            }
+                                        });
+
+                                        textBorder = BorderFactory.createTitledBorder("altName");
+                                        textBorder.setTitleJustification(TitledBorder.CENTER);
+                                        JTextField altNameText = new JTextField(9);
+                                        altNameText.setBackground(psdSettingsPanel.getBackground());
+                                        altNameText.setHorizontalAlignment(JTextField.CENTER);
+                                        altNameText.setBorder(textBorder);
+                                        altNameText.setText(tempBtn.altName);
+                                        altNameText.addFocusListener(new FocusListener(){
+                                            public void focusGained(FocusEvent f){
+                                                altNameText.setText("");
+                                            }
+                                            public void focusLost(FocusEvent f){
+                                                tempBtn.altName=altNameText.getText();
+                                            }
+                                        });
+
+                                        textBorder = BorderFactory.createTitledBorder("replace");
+                                        textBorder.setTitleJustification(TitledBorder.CENTER);
+                                        JTextField replaceText = new JTextField(9);
+                                        replaceText.setBackground(psdSettingsPanel.getBackground());
+                                        replaceText.setHorizontalAlignment(JTextField.CENTER);
+                                        replaceText.setBorder(textBorder);
+                                        boolean sameReplace = true;
+                                        for(PsdButton psd : psds){
+                                            if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
+                                                sameReplace=false;
+                                            }
+                                        }
+                                        if(sameReplace){
+                                            replaceText.setText(tempBtn.replaceString);
+                                        }
+                                        replaceText.addFocusListener(new FocusListener(){
+                                            public void focusGained(FocusEvent f){
+                                                replaceText.setText("");
+                                            }
+                                            public void focusLost(FocusEvent f){
+                                                if(replaceText.getText().length()==0){
+                                                    boolean sameReplace = true;
+                                                    for(PsdButton psd : psds){
+                                                        if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
+                                                            sameReplace=false;
+                                                        }
+                                                    }
+                                                    if(sameReplace){
+                                                        replaceText.setText(tempBtn.replaceString);
+                                                    }
+                                                    else{
+                                                        replaceText.setText("");
+                                                    }
+                                                }
+                                                else{
+                                                    for(PsdButton psd : psds){
+                                                        if(psd.selected){
+                                                            psd.replaceString=replaceText.getText();
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+
+                                        psdSettingsPanel.add(psdLabel);
+                                        psdSettingsPanel.add(cLimitText);
+                                        int numSelected=0;
+                                        for(PsdButton psd: psds){
+                                            if(psd.selected){
+                                                numSelected++;
+                                            }
+                                        }
+                                        if(numSelected<2){
+                                            psdSettingsPanel.add(altNameText);
+                                        }
+                                        psdSettingsPanel.add(replaceText);
+                                        psdSettingsPanel.setVisible(true);
+                                    }
                                     frame.validate();
                                     frame.repaint();
                                 }
@@ -470,7 +593,6 @@ public class Main
                                     handle.exportAsDrag(button, m, TransferHandler.COPY);
                                 }
                             });
-                            
                             psds.add(tempBtn);
                             buttonPanel.add(tempBtn);
                             if(buttonPanel.getComponentCount()<10){
@@ -482,7 +604,9 @@ public class Main
                         }
                     }
                     psdPanel.removeAll();
+                    psdSettingsPanel.setVisible(false);
                     psdPanel.add(BorderLayout.CENTER,buttonPanel);
+                    psdPanel.add(BorderLayout.SOUTH,psdSettingsPanel);
                     frame.validate();
                     frame.repaint();
                 }
@@ -505,7 +629,7 @@ public class Main
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
                             InputStream in = getClass().getResourceAsStream("rename.jsx");
-                            File renameFile = new File(scriptsFolder+"\\RenameMalCards.jsx");
+                            File renameFile = new File(scriptsFolder.getAbsolutePath()+"\\RenameMalCards.jsx");
                             try{
                                 if(!renameFile.createNewFile()){
                                     renameFile.delete();
@@ -516,7 +640,6 @@ public class Main
                                 boolean addToArray=true;
                                 String newLine = reader.readLine();
                                 while(newLine!=null){
-                                    
                                     if(addToArray || newLine.equals("//start of code")){
                                         renameContents.add(newLine+"\n");
                                         if(newLine.equals("//start of data")){
@@ -728,11 +851,33 @@ public class Main
                     if(searchText.indexOf(",")!=-1){
                         String longName = searchText.substring(0,searchText.indexOf(","));
                         String shortName = searchText.substring(searchText.indexOf(",")+1);
-                        createUser(longName,shortName);
+                        CardUser newUser = createUser(longName,shortName);
+                        newUser.addMouseListener(new MouseAdapter(){
+                            public void mousePressed(MouseEvent m){
+                                if(SwingUtilities.isRightMouseButton(m)){
+                                    addedUsers.remove(newUser);
+                                    listedUsersPanel.remove(newUser);
+                                    model.addElement(newUser.fullName);
+                                    frame.validate();
+                                    frame.repaint();
+                                }
+                            }
+                        });
                     }
                     else{
                         String longName = searchText;
-                        createUser(longName,null);
+                        CardUser newUser = createUser(longName,null);
+                        newUser.addMouseListener(new MouseAdapter(){
+                            public void mousePressed(MouseEvent m){
+                                if(SwingUtilities.isRightMouseButton(m)){
+                                    addedUsers.remove(newUser);
+                                    listedUsersPanel.remove(newUser);
+                                    model.addElement(newUser.fullName);
+                                    frame.validate();
+                                    frame.repaint();
+                                }
+                            }
+                        });
                     }
                     //model.removeElement(searchText);
                     search.setText("");
@@ -793,7 +938,7 @@ public class Main
 
         search.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if(model.getSize()>0&&search.getText().equals(model.getElementAt(0))){
+                if(model.getSize()>0&&search.getText().equals(model.getElementAt(0))||savedUsers.contains(search.getText())){
                     searchList.setVisible(false);
                     frame.validate();
                     frame.repaint();
@@ -802,11 +947,33 @@ public class Main
                     if(searchText.indexOf(",")!=-1){
                         String longName = searchText.substring(0,searchText.indexOf(","));
                         String shortName = searchText.substring(searchText.indexOf(",")+1);
-                        createUser(longName,shortName);
+                        CardUser newUser = createUser(longName,shortName);
+                        newUser.addMouseListener(new MouseAdapter(){
+                            public void mousePressed(MouseEvent m){
+                                if(SwingUtilities.isRightMouseButton(m)){
+                                    addedUsers.remove(newUser);
+                                    listedUsersPanel.remove(newUser);
+                                    model.addElement(newUser.fullName);
+                                    frame.validate();
+                                    frame.repaint();
+                                }
+                            }
+                        });
                     }
                     else{
                         String longName = searchText;
-                        createUser(longName,null);
+                        CardUser newUser = createUser(longName,null);
+                        newUser.addMouseListener(new MouseAdapter(){
+                            public void mousePressed(MouseEvent m){
+                                if(SwingUtilities.isRightMouseButton(m)){
+                                    addedUsers.remove(newUser);
+                                    listedUsersPanel.remove(newUser);
+                                    model.addElement(newUser.fullName);
+                                    frame.validate();
+                                    frame.repaint();
+                                }
+                            }
+                        });
                     }
                     search.setText("");
                 }
@@ -837,11 +1004,33 @@ public class Main
                             if(longName.getText().length()>0){
                                 if(shortName.getText().length()>0){
                                     savedUsers.add(longName.getText()+","+shortName.getText());
-                                    createUser(longName.getText(),shortName.getText());
+                                    CardUser newUser = createUser(longName.getText(),shortName.getText());
+                                    newUser.addMouseListener(new MouseAdapter(){
+                                        public void mousePressed(MouseEvent m){
+                                            if(SwingUtilities.isRightMouseButton(m)){
+                                                addedUsers.remove(newUser);
+                                                listedUsersPanel.remove(newUser);
+                                                model.addElement(newUser.fullName);
+                                                frame.validate();
+                                                frame.repaint();
+                                            }
+                                        }
+                                    });
                                 }
                                 else{
                                     savedUsers.add(longName.getText());
-                                    createUser(longName.getText(),null);
+                                    CardUser newUser = createUser(longName.getText(),null);
+                                    newUser.addMouseListener(new MouseAdapter(){
+                                        public void mousePressed(MouseEvent m){
+                                            if(SwingUtilities.isRightMouseButton(m)){
+                                                addedUsers.remove(newUser);
+                                                listedUsersPanel.remove(newUser);
+                                                model.addElement(newUser.fullName);
+                                                frame.validate();
+                                                frame.repaint();
+                                            }
+                                        }
+                                    });
                                 }
                             }
                             saveUsers();
@@ -897,6 +1086,11 @@ public class Main
         });
         
         contentPanel.add(BorderLayout.NORTH,psdPanel);
+        scroller.addMouseListener(new MouseAdapter(){
+            public void mousePressed(MouseEvent m){
+                frame.requestFocusInWindow();
+            }
+        });
         contentPanel.add(userPanel);
 
         frame.add(BorderLayout.NORTH,mb);
@@ -905,9 +1099,8 @@ public class Main
         dragDropPanel.setOpaque(false);
         frame.add(BorderLayout.CENTER,contentPanel);
         frame.addMouseListener(new MouseAdapter(){
-            public void mouseClicked(MouseEvent m){
+            public void mousePressed(MouseEvent m){
                 frame.requestFocusInWindow();
-                
             }
         });
         
@@ -917,6 +1110,10 @@ public class Main
                 frame.validate();
                 frame.repaint();
             }
+            public void windowLostFocus(WindowEvent w){
+                ctrlHeld=false;
+                shiftHeld=false;
+            }
         });
 
         frame.addComponentListener(new ComponentAdapter(){
@@ -924,6 +1121,25 @@ public class Main
                 lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.8));
                 scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.8));
                 searchPanel.setBounds(0,0,frame.getWidth(),(int)(searchPanel.getBounds().getHeight()));
+            }
+        });
+
+        frame.addKeyListener(new KeyAdapter(){
+            public void keyPressed(KeyEvent k){
+                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&!ctrlHeld){
+                    ctrlHeld=true;
+                }
+                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&!shiftHeld){
+                    shiftHeld=true;
+                }
+            }
+            public void keyReleased(KeyEvent k){
+                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&ctrlHeld){
+                    ctrlHeld=false;
+                }
+                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&shiftHeld){
+                    shiftHeld=false;
+                }
             }
         });
         frame.setVisible(true);
@@ -994,16 +1210,6 @@ public class Main
             nameBorder.setTitleJustification(TitledBorder.CENTER);
             userPanel.setBorder(nameBorder);
             listedUsersPanel.add(userPanel);
-            userPanel.addMouseListener(new MouseAdapter(){
-                public void mousePressed(MouseEvent m){
-                    if(SwingUtilities.isRightMouseButton(m)){
-                        addedUsers.remove(userPanel);
-                        listedUsersPanel.remove(userPanel);
-                        frame.validate();
-                        frame.repaint();
-                    }
-                }
-            });
             frame.validate();
             frame.repaint();
             return userPanel;
@@ -1015,16 +1221,6 @@ public class Main
             nameBorder.setTitleJustification(TitledBorder.CENTER);
             userPanel.setBorder(nameBorder);
             listedUsersPanel.add(userPanel);
-            userPanel.addMouseListener(new MouseAdapter(){
-                public void mousePressed(MouseEvent m){
-                    if(SwingUtilities.isRightMouseButton(m)){
-                        addedUsers.remove(userPanel);
-                        listedUsersPanel.remove(userPanel);
-                        frame.validate();
-                        frame.repaint();
-                    }
-                }
-            });
             frame.validate();
             frame.repaint();
             return userPanel;
