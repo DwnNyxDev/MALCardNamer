@@ -55,7 +55,6 @@ public class PsdExportTransferHandler extends TransferHandler {
     @Override
     protected void exportDone(JComponent source, Transferable data, int action) {
         super.exportDone(source, data, action);
-        
-        // Decide what to do after the drop has been accepted
+
     }
 }

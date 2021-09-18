@@ -6,6 +6,10 @@ import javax.swing.event.ListSelectionListener;
 import java.io.*;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.DefaultStyledDocument.ElementSpec;
 
 import java.util.Scanner;
@@ -13,6 +17,7 @@ import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -59,6 +64,11 @@ public class Main
     private static boolean ctrlHeld;
     private static boolean shiftHeld;
     private static int lastSelectedIndex = 0;
+    private static boolean start;
+    private static int startStep;
+    private static JFrame tutFrame;
+    private static JLabel stepLabel;
+    private static JTextPane detailPane;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -75,11 +85,14 @@ public class Main
 
         ctrlHeld = false;
         shiftHeld=false;
+        start = false;
+        startStep=1;
         
         frame = new JFrame("MALCardNamer");
         frame.setIconImage(new ImageIcon("MAL_Logo.png").getImage());
         frame.setSize((int)(screenWidth*.75),(int)(screenHeight*.75));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);
 
         JLabel psdOpenLabel = new JLabel(new ImageIcon(new ImageIcon("OpenPsds.png").getImage().getScaledInstance((int)(frame.getWidth()*.25), -1, Image.SCALE_SMOOTH)));
         JLayeredPane framePane = new JLayeredPane();
@@ -88,8 +101,9 @@ public class Main
 
         JMenuBar mb = new JMenuBar();
         JMenu m1 = new JMenu("File");
-        JMenuItem m11= new JMenuItem("Read Webpage");
-        m11.addActionListener(new ActionListener(){
+        JMenuItem m11= new JMenuItem("Open PSDs");
+        JMenuItem m12= new JMenuItem("Read Webpage");
+        m12.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
                 if(psds.size()>0){
                     final JDialog dialog = new JDialog(frame,"Topic Contents",true);
@@ -173,7 +187,7 @@ public class Main
                                 }
                                 else if(searchForCards){
                                     if(newUser!=null){
-                                        if(nextLine.toLowerCase().contains("all")){
+                                        if(cardMaker!=null&&cardMaker.length()>0&&nextLine.toLowerCase().contains(cardMaker.toLowerCase())&&nextLine.toLowerCase().contains("all")){
                                             for(PsdButton psd: psds){
                                                 if(!newUser.cards.contains(psd)){
                                                     newUser.cards.add(psd);
@@ -334,285 +348,6 @@ public class Main
                 }
             }
         });
-        JMenuItem m12= new JMenuItem("Open PSDs");
-        m12.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent a){
-                final JFileChooser psdSelecter = new JFileChooser(System.getProperty("user.dir"));
-                if(lastOpenLocation!=null){
-                    psdSelecter.setCurrentDirectory(lastOpenLocation);
-                }
-                psdSelecter.setMultiSelectionEnabled(true);
-                psdSelecter.setFileFilter(new FileNameExtensionFilter("Photoshop Projects","psd"));
-                ArrayList<File> chosenFiles = new ArrayList<File>();
-                psdSelecter.addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY,new PropertyChangeListener(){
-                    public void propertyChange(PropertyChangeEvent pc){
-                        List<File> selected = Arrays.asList(psdSelecter.getSelectedFiles());
-                        for(File chosen : chosenFiles){
-                            if(!selected.contains(chosen)){
-                                chosenFiles.remove(chosen);
-                            }
-                        }
-                        for(File select: selected){
-                            if(!chosenFiles.contains(select)){
-                                chosenFiles.add(select);
-                            }
-                        }
-                    }
-                });
-                if(psdSelecter.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
-                    File[] psdFiles  = new File[chosenFiles.size()];
-                    for(int f=0; f<chosenFiles.size(); f++){
-                        psdFiles[f]=chosenFiles.get(f);
-                    }
-                    lastOpenLocation = psdFiles[0].getParentFile();
-                    for(int i=0; i<psdFiles.length; i++){
-                        boolean alreadyExists=false;
-                        for(PsdButton psd: psds){
-                            if(psd.name.equals(psdFiles[i].getName())){
-                                alreadyExists=true;
-                            }
-                        }
-                        if(!alreadyExists){
-                            PsdButton tempBtn = new PsdButton(psdFiles[i]);
-                            tempBtn.setFocusable(false);
-                            tempBtn.addActionListener(new ActionListener(){
-                                public void actionPerformed(ActionEvent a){
-                                    frame.requestFocusInWindow();
-                                    psdSettingsPanel.removeAll();
-                                    psdSettingsPanel.setVisible(false);
-                                    if(tempBtn.selected){
-                                        tempBtn.setBackground(null);
-                                        tempBtn.selected=false;
-                                    }
-                                    else if(!tempBtn.selected){
-                                        if(!ctrlHeld){
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected){
-                                                    psd.setBackground(null);
-                                                    psd.selected=false;
-                                                }
-                                            }
-                                        }
-                                        int currIndex = psds.indexOf(tempBtn);
-                                        if(shiftHeld){
-                                            if(currIndex<lastSelectedIndex){
-                                                for(int i=currIndex; i<=lastSelectedIndex; i++){
-                                                    psds.get(i).selected=true;
-                                                    psds.get(i).setBackground(Color.cyan);
-                                                }
-                                            }
-                                            else{
-                                                for(int i=lastSelectedIndex; i<=currIndex; i++){
-                                                    psds.get(i).selected=true;
-                                                    psds.get(i).setBackground(Color.cyan);
-                                                }
-                                            }
-                                        }
-                                        tempBtn.setBackground(Color.cyan);
-                                        tempBtn.selected=true;
-                                        lastSelectedIndex=currIndex;
-                                    }
-                                    ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
-                                    for(PsdButton psd : psds){
-                                        if(psd.selected){
-                                            selectedPsds.add(psd);
-                                        }
-                                    }
-                                    if(selectedPsds.size()>0){
-                                        JLabel psdLabel = null;
-                                        if(selectedPsds.size()<=3){
-                                            String psdNames = "";
-                                            for(int i=0; i<selectedPsds.size(); i++){
-                                                PsdButton indexPsd = selectedPsds.get(i);
-                                                if(i<selectedPsds.size()-1){
-                                                    psdNames+=indexPsd.name+",";
-                                                }
-                                                else{
-                                                    psdNames+=indexPsd.name;
-                                                }
-                                            }
-                                            psdLabel = new JLabel(psdNames+": ",JLabel.RIGHT);
-                                        }
-                                        else{
-                                            String psdNames = "";
-                                            for(int i=0; i<3; i++){
-                                                PsdButton indexPsd = selectedPsds.get(i);
-                                                if(i<2){
-                                                    psdNames+=indexPsd.name+",";
-                                                }
-                                                else{
-                                                    psdNames+=indexPsd.name;
-                                                }
-                                            }
-                                            String lastPsdName = selectedPsds.get(selectedPsds.size()-1).name;
-                                            psdLabel = new JLabel(psdNames+"..."+lastPsdName+": ",JLabel.RIGHT);
-                                        }
-
-                                        TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
-                                        textBorder.setTitleJustification(TitledBorder.CENTER);
-                                        JTextField cLimitText = new JTextField(9);
-                                        cLimitText.setBackground(psdSettingsPanel.getBackground());
-                                        cLimitText.setHorizontalAlignment(JTextField.CENTER);
-                                        cLimitText.setBorder(textBorder);
-                                        boolean sameLimit=true;
-                                        for(PsdButton psd : psds){
-                                            if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
-                                                sameLimit=false;
-                                            }
-                                        }
-                                        if(sameLimit){
-                                            cLimitText.setText(String.valueOf(tempBtn.charLimit));
-                                        }
-                                        cLimitText.addFocusListener(new FocusListener(){
-                                            public void focusGained(FocusEvent f){
-                                                cLimitText.setText("");
-                                            }
-                                            public void focusLost(FocusEvent f){
-                                                try{
-                                                    int cLimit = Integer.valueOf(cLimitText.getText());
-                                                    for(PsdButton psd : psds){
-                                                        if(psd.selected){   
-                                                            psd.charLimit= cLimit;
-                                                        }
-                                                    }
-                                                } catch(NumberFormatException e){
-                                                    boolean sameLimit=true;
-                                                    for(PsdButton psd : psds){
-                                                        if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
-                                                            sameLimit=false;
-                                                        }
-                                                    }
-                                                    if(sameLimit){
-                                                        cLimitText.setText(String.valueOf(tempBtn.charLimit));
-                                                    }
-                                                    else{
-                                                        cLimitText.setText("");
-                                                    }
-                                                }
-                                            }
-                                        });
-
-                                        textBorder = BorderFactory.createTitledBorder("altName");
-                                        textBorder.setTitleJustification(TitledBorder.CENTER);
-                                        JTextField altNameText = new JTextField(9);
-                                        altNameText.setBackground(psdSettingsPanel.getBackground());
-                                        altNameText.setHorizontalAlignment(JTextField.CENTER);
-                                        altNameText.setBorder(textBorder);
-                                        altNameText.setText(tempBtn.altName);
-                                        altNameText.addFocusListener(new FocusListener(){
-                                            public void focusGained(FocusEvent f){
-                                                altNameText.setText("");
-                                            }
-                                            public void focusLost(FocusEvent f){
-                                                tempBtn.altName=altNameText.getText();
-                                            }
-                                        });
-
-                                        textBorder = BorderFactory.createTitledBorder("replace");
-                                        textBorder.setTitleJustification(TitledBorder.CENTER);
-                                        JTextField replaceText = new JTextField(9);
-                                        replaceText.setBackground(psdSettingsPanel.getBackground());
-                                        replaceText.setHorizontalAlignment(JTextField.CENTER);
-                                        replaceText.setBorder(textBorder);
-                                        boolean sameReplace = true;
-                                        for(PsdButton psd : psds){
-                                            if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
-                                                sameReplace=false;
-                                            }
-                                        }
-                                        if(sameReplace){
-                                            replaceText.setText(tempBtn.replaceString);
-                                        }
-                                        replaceText.addFocusListener(new FocusListener(){
-                                            public void focusGained(FocusEvent f){
-                                                replaceText.setText("");
-                                            }
-                                            public void focusLost(FocusEvent f){
-                                                if(replaceText.getText().length()==0){
-                                                    boolean sameReplace = true;
-                                                    for(PsdButton psd : psds){
-                                                        if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
-                                                            sameReplace=false;
-                                                        }
-                                                    }
-                                                    if(sameReplace){
-                                                        replaceText.setText(tempBtn.replaceString);
-                                                    }
-                                                    else{
-                                                        replaceText.setText("");
-                                                    }
-                                                }
-                                                else{
-                                                    for(PsdButton psd : psds){
-                                                        if(psd.selected){
-                                                            psd.replaceString=replaceText.getText();
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        });
-
-                                        psdSettingsPanel.add(psdLabel);
-                                        psdSettingsPanel.add(cLimitText);
-                                        int numSelected=0;
-                                        for(PsdButton psd: psds){
-                                            if(psd.selected){
-                                                numSelected++;
-                                            }
-                                        }
-                                        if(numSelected<2){
-                                            psdSettingsPanel.add(altNameText);
-                                        }
-                                        psdSettingsPanel.add(replaceText);
-                                        psdSettingsPanel.setVisible(true);
-                                    }
-                                    frame.validate();
-                                    frame.repaint();
-                                }
-                            });
-                            
-                            tempBtn.addMouseMotionListener(new MouseAdapter(){
-                                public void mouseDragged(MouseEvent m){
-                                    PsdButton button = (PsdButton) m.getSource();
-                                    if(!button.selected){
-                                        tempBtn.setTransferHandler(new PsdExportTransferHandler(new PsdButton[]{tempBtn}));
-                                        tempBtn.setEnabled(false);
-                                        tempBtn.setEnabled(true);
-                                    }
-                                    else{
-                                        ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
-                                        for(PsdButton psd : psds){
-                                            if(psd.selected){
-                                                selectedPsds.add(psd);
-                                            }
-                                        }
-                                        tempBtn.setTransferHandler(new PsdExportTransferHandler(selectedPsds.toArray(new PsdButton[0])));
-                                        tempBtn.setEnabled(false);
-                                        tempBtn.setEnabled(true);
-                                    }
-                                    TransferHandler handle = button.getTransferHandler();
-                                    handle.exportAsDrag(button, m, TransferHandler.COPY);
-                                }
-                            });
-                            psds.add(tempBtn);
-                            buttonPanel.add(tempBtn);
-                            if(buttonPanel.getComponentCount()<10){
-                                ((GridLayout)buttonPanel.getLayout()).setColumns(buttonPanel.getComponentCount());
-                            }
-                            else{
-                                ((GridLayout)buttonPanel.getLayout()).setColumns(10);
-                            }
-                        }
-                    }
-                    psdPanel.removeAll();
-                    psdSettingsPanel.setVisible(false);
-                    psdPanel.add(BorderLayout.CENTER,buttonPanel);
-                    psdPanel.add(BorderLayout.SOUTH,psdSettingsPanel);
-                    frame.validate();
-                    frame.repaint();
-                }
-            }
-        });
         JMenuItem m13 = new JMenuItem("Save Script");
         m13.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
@@ -625,7 +360,8 @@ public class Main
                         }
                     }
                     if(atleastOne){
-                        JFileChooser tempSaver = new JFileChooser(System.getProperty("user.dir"));
+                        boolean error=false;
+                        JFileChooser tempSaver = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
                         tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
@@ -636,11 +372,24 @@ public class Main
                                     renameFile.delete();
                                     renameFile.createNewFile();
                                 }
+                            }
+                            catch( IOException e){
+                                error=true;
+                                JOptionPane.showMessageDialog(frame, e, "RenameFileError", JOptionPane.ERROR_MESSAGE);
+                            };
+                            if(!error){
                                 ArrayList<String> renameContents = new ArrayList<String>();
                                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                                 boolean addToArray=true;
-                                String newLine = reader.readLine();
-                                while(newLine!=null){
+                                String newLine = null;
+                                try{
+                                    newLine = reader.readLine();
+                                }
+                                catch(IOException e){
+                                    error=true;
+                                    JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
+                                }
+                                while(newLine!=null&&!error){
                                     if(addToArray || newLine.equals("//start of code")){
                                         renameContents.add(newLine+"\n");
                                         if(newLine.equals("//start of data")){
@@ -650,67 +399,109 @@ public class Main
                                             addToArray=true;
                                         }
                                     }
-                                    newLine=reader.readLine();
-                                }
-                                reader.close();
-                                ArrayList<String> data = new ArrayList<String>();
-                                data.add("var users = {\n");
-                                for(int i=0; i<addedUsers.size(); i++){
-                                    CardUser tempUser = addedUsers.get(i);
-                                    String cardInput = "    '"+i+"' : {'names':['"+tempUser.names[0]+"'";
-                                    if(tempUser.names.length>1){
-                                        cardInput+=",'"+tempUser.names[1]+"'";
+                                    try{
+                                        newLine = reader.readLine();
                                     }
-                                    cardInput+="],cards:[";
-                                    for(int j=0; j<tempUser.model.size(); j++){
-                                        if(j<tempUser.model.size()-1){
-                                            cardInput+="'"+String.valueOf(tempUser.model.get(j))+"',";
+                                    catch(IOException e){
+                                        error=true;
+                                        JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                }
+                                try {
+                                    reader.close();
+                                } catch (IOException e) {
+                                    error=true;
+                                    JOptionPane.showMessageDialog(frame, e, "FileReaderCloseError", JOptionPane.ERROR_MESSAGE);
+                                }
+                                if(!error){
+                                    ArrayList<String> data = new ArrayList<String>();
+                                    data.add("var users = {\n");
+                                    for(int i=0; i<addedUsers.size(); i++){
+                                        CardUser tempUser = addedUsers.get(i);
+                                        String cardInput = "    '"+i+"' : {'names':['"+tempUser.names[0]+"'";
+                                        if(tempUser.names.length>1){
+                                            cardInput+=",'"+tempUser.names[1]+"'";
+                                        }
+                                        cardInput+="],cards:[";
+                                        for(int j=0; j<tempUser.model.size(); j++){
+                                            if(j<tempUser.model.size()-1){
+                                                cardInput+="'"+String.valueOf(tempUser.model.get(j))+"',";
+                                            }
+                                            else{
+                                                cardInput+="'"+String.valueOf(tempUser.model.get(j))+"'";
+                                            }
+                                        }
+                                        cardInput+="]},\n";
+                                        data.add(cardInput);
+                                    }
+                                    data.add("};\n\n");
+                                    data.add("var psds = {\n");
+                                    for(int p=0; p<psds.size(); p++){
+                                        PsdButton psd = psds.get(p);
+                                        String psdInput;
+                                        if(!useGlobalSettings){
+                                            psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
                                         }
                                         else{
-                                            cardInput+="'"+String.valueOf(tempUser.model.get(j))+"'";
+                                            psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+globalCLimit+",'replace':'"+globalReplaceString+"'";
+                                        }
+                                        psdInput+="},\n";
+                                        data.add(psdInput);
+                                    }
+                                    data.add("};\n\n");
+                                    String savePath = saveLocation.getAbsolutePath();
+                                    data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
+                                    for(PsdButton psd :psds){
+                                        data.add("app.open(new File('"+psd.file.getAbsolutePath().replace("\\","\\\\")+"'));\n");
+                                    }
+                                    renameContents.addAll(1,data);
+                                    FileWriter cmdWriter = null;
+                                    try {
+                                        cmdWriter = new FileWriter(renameFile);
+                                    } catch (IOException e) {
+                                        error=true;
+                                        JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                    if(!error){
+                                        for(String line: renameContents){
+                                            try {
+                                                cmdWriter.write(line);
+                                            } catch (IOException e) {
+                                                error=true;
+                                                JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
+                                            }
+                                        }
+                                        try {
+                                            cmdWriter.close();
+                                        } catch (IOException e) {
+                                            error=true;
+                                            JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                        }
+                                        if(!error){
+                                            if(start&&startStep==5){
+                                                startStep=6;
+                                                stepLabel.setText("Step 6: Run Script in Photoshop");
+                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Click Done to close the tutorial.");
+                                                JButton done = new JButton("Done");
+                                                done.addActionListener(new ActionListener(){
+                                                    public void actionPerformed(ActionEvent a){
+                                                        tutFrame.dispose();
+                                                    }
+                                                });
+                                                tutFrame.add(BorderLayout.SOUTH,done);
+                                            }
+                                            JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
                                         }
                                     }
-                                    cardInput+="]},\n";
-                                    data.add(cardInput);
                                 }
-                                data.add("};\n\n");
-                                data.add("var psds = {\n");
-                                for(int p=0; p<psds.size(); p++){
-                                    PsdButton psd = psds.get(p);
-                                    String psdInput;
-                                    if(!useGlobalSettings){
-                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
-                                    }
-                                    else{
-                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+globalCLimit+",'replace':'"+globalReplaceString+"'";
-                                    }
-                                    psdInput+="},\n";
-                                    data.add(psdInput);
-                                }
-                                data.add("};\n\n");
-                                String savePath = saveLocation.getAbsolutePath();
-                                data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
-                                for(PsdButton psd :psds){
-                                    data.add("app.open(new File('"+psd.file.getAbsolutePath().replace("\\","\\\\")+"'));\n");
-                                }
-                                renameContents.addAll(1,data);
-                                FileWriter cmdWriter = new FileWriter(renameFile);
-                                for(String line: renameContents){
-                                    cmdWriter.write(line);
-                                }
-                                cmdWriter.close(); 
-                                JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
                             } 
-                            catch(IOException e){
-                                JOptionPane.showMessageDialog(frame, e, "Error", JOptionPane.ERROR_MESSAGE);
-                            }
                         }
                     }
                 }
             }
         });
-        m1.add(m12);
         m1.add(m11);
+        m1.add(m12);
         m1.add(m13);
         JMenu m2 = new JMenu("Global");
         JCheckBox useGlobal = new JCheckBox("Use Global Settings?");
@@ -786,8 +577,12 @@ public class Main
         m2.add(useGlobal);
         m2.add(cLimitText);
         m2.add(replaceText);
+        JMenu m3 = new JMenu("Help");
+        JMenuItem m31 = new JMenuItem("Tutorial");
+        m3.add(m31);
         mb.add(m1);
         mb.add(m2);
+        mb.add(m3);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBounds(0,0,frame.getWidth(),frame.getHeight());
@@ -828,7 +623,7 @@ public class Main
                 if(search.getText().equals("Search for a saved user or add a new one here")){
                     search.setText("");
                 }
-                if(model.getSize()>0){
+                if(model.getSize()>0&&searchList.isEnabled()){
                     searchPanel.setBounds(0,0,frame.getWidth(),100);
                     searchList.setVisible(true);
                 }
@@ -855,7 +650,7 @@ public class Main
                         CardUser newUser = createUser(longName,shortName);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)){
+                                if(SwingUtilities.isRightMouseButton(m)&&!start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -870,7 +665,7 @@ public class Main
                         CardUser newUser = createUser(longName,null);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)){
+                                if(SwingUtilities.isRightMouseButton(m)&&!start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -939,7 +734,7 @@ public class Main
 
         search.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if(model.getSize()>0&&search.getText().equals(model.getElementAt(0))||savedUsers.contains(search.getText())){
+                if(!start&&(model.getSize()>0&&search.getText().equals(model.getElementAt(0))||savedUsers.contains(search.getText()))){
                     searchList.setVisible(false);
                     frame.validate();
                     frame.repaint();
@@ -951,7 +746,7 @@ public class Main
                         CardUser newUser = createUser(longName,shortName);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)){
+                                if(SwingUtilities.isRightMouseButton(m)&&!start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -966,7 +761,7 @@ public class Main
                         CardUser newUser = createUser(longName,null);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)){
+                                if(SwingUtilities.isRightMouseButton(m)&&!start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -1004,11 +799,13 @@ public class Main
                         public void actionPerformed(ActionEvent a){
                             if(longName.getText().length()>0){
                                 if(shortName.getText().length()>0){
-                                    savedUsers.add(longName.getText()+","+shortName.getText());
+                                    if(!start){
+                                        savedUsers.add(longName.getText()+","+shortName.getText());
+                                    }
                                     CardUser newUser = createUser(longName.getText(),shortName.getText());
                                     newUser.addMouseListener(new MouseAdapter(){
                                         public void mousePressed(MouseEvent m){
-                                            if(SwingUtilities.isRightMouseButton(m)){
+                                            if(SwingUtilities.isRightMouseButton(m)&&!start){
                                                 addedUsers.remove(newUser);
                                                 listedUsersPanel.remove(newUser);
                                                 model.addElement(newUser.fullName);
@@ -1023,7 +820,7 @@ public class Main
                                     CardUser newUser = createUser(longName.getText(),null);
                                     newUser.addMouseListener(new MouseAdapter(){
                                         public void mousePressed(MouseEvent m){
-                                            if(SwingUtilities.isRightMouseButton(m)){
+                                            if(SwingUtilities.isRightMouseButton(m)&&!start){
                                                 addedUsers.remove(newUser);
                                                 listedUsersPanel.remove(newUser);
                                                 model.addElement(newUser.fullName);
@@ -1032,6 +829,17 @@ public class Main
                                             }
                                         }
                                     });
+                                }
+                                if(addedUsers.size()>0&&start&&startStep==2){
+                                    startStep=3;
+                                    stepLabel.setText("Step 3: Add PSDs to User's List");
+                                    detailPane.setText("Now, give yourself some cards.\n Simply drag each psd one at a time into your list.\nThis can be done faster by selecting all the psds at once as if you were selecting files.\nI.e. Select the leftmost psd. Hold shift and select the rightmost psd. Then drag them into the list.");
+                                    search.setText("");
+                                    search.setEnabled(false);
+                                    for(PsdButton psd: psds){
+                                        psd.setEnabled(true);
+                                    }
+                                    tutFrame.pack();
                                 }
                             }
                             saveUsers();
@@ -1144,6 +952,395 @@ public class Main
             }
         });
         frame.setVisible(true);
+        m11.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                final JFileChooser psdSelecter = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
+                if(start==false){
+                    if(lastOpenLocation!=null){
+                        psdSelecter.setCurrentDirectory(lastOpenLocation);
+                    }
+                    psdSelecter.setMultiSelectionEnabled(true);
+                    psdSelecter.setFileFilter(new FileNameExtensionFilter("Photoshop Projects","psd"));
+                }
+                else{
+                    File samplesFolder = new File("Samples");
+                    if(samplesFolder.exists()){
+                        psdSelecter.setCurrentDirectory(samplesFolder);
+                        psdSelecter.setMultiSelectionEnabled(true);
+                    }
+                    else{
+                        if(tutFrame!=null){
+                            tutFrame.dispose();
+                        }
+                    }
+                }
+                ArrayList<File> chosenFiles = new ArrayList<File>();
+                psdSelecter.addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY,new PropertyChangeListener(){
+                    public void propertyChange(PropertyChangeEvent pc){
+                        List<File> selected = Arrays.asList(psdSelecter.getSelectedFiles());
+                        for(File chosen : chosenFiles){
+                            if(!selected.contains(chosen)){
+                                chosenFiles.remove(chosen);
+                            }
+                        }
+                        for(File select: selected){
+                            if(!chosenFiles.contains(select)){
+                                chosenFiles.add(select);
+                            }
+                        }
+                    }
+                });
+                if(psdSelecter.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
+                    ArrayList<String> chosenNames = new ArrayList<String>();
+                    for(File f: chosenFiles){
+                        chosenNames.add(f.getName());
+                    }
+                    if(!start||(start&&chosenNames.contains("1.psd")&&chosenNames.contains("2.psd")&&chosenNames.contains("3.psd"))){
+                        File[] psdFiles  = new File[chosenFiles.size()];
+                        for(int f=0; f<chosenFiles.size(); f++){
+                            psdFiles[f]=chosenFiles.get(f);
+                        }
+                        if(!start){
+                            lastOpenLocation = psdFiles[0].getParentFile();
+                        }
+                        for(int i=0; i<psdFiles.length; i++){
+                            boolean alreadyExists=false;
+                            for(PsdButton psd: psds){
+                                if(psd.name.equals(psdFiles[i].getName())){
+                                    alreadyExists=true;
+                                }
+                            }
+                            if(!alreadyExists){
+                                PsdButton tempBtn = new PsdButton(psdFiles[i]);
+                                tempBtn.setFocusable(false);
+                                tempBtn.addActionListener(new ActionListener(){
+                                    public void actionPerformed(ActionEvent a){
+                                        frame.requestFocusInWindow();
+                                        psdSettingsPanel.removeAll();
+                                        psdSettingsPanel.setVisible(false);
+                                        if(tempBtn.selected){
+                                            tempBtn.setBackground(null);
+                                            tempBtn.selected=false;
+                                        }
+                                        else if(!tempBtn.selected){
+                                            if(!ctrlHeld){
+                                                for(PsdButton psd : psds){
+                                                    if(psd.selected){
+                                                        psd.setBackground(null);
+                                                        psd.selected=false;
+                                                    }
+                                                }
+                                            }
+                                            int currIndex = psds.indexOf(tempBtn);
+                                            if(shiftHeld){
+                                                if(currIndex<lastSelectedIndex){
+                                                    for(int i=currIndex; i<=lastSelectedIndex; i++){
+                                                        psds.get(i).selected=true;
+                                                        psds.get(i).setBackground(Color.cyan);
+                                                    }
+                                                }
+                                                else{
+                                                    for(int i=lastSelectedIndex; i<=currIndex; i++){
+                                                        psds.get(i).selected=true;
+                                                        psds.get(i).setBackground(Color.cyan);
+                                                    }
+                                                }
+                                            }
+                                            tempBtn.setBackground(Color.cyan);
+                                            tempBtn.selected=true;
+                                            lastSelectedIndex=currIndex;
+                                        }
+                                        ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
+                                        for(PsdButton psd : psds){
+                                            if(psd.selected){
+                                                selectedPsds.add(psd);
+                                            }
+                                        }
+                                        if(selectedPsds.size()>0){
+                                            JLabel psdLabel = null;
+                                            if(selectedPsds.size()<=3){
+                                                String psdNames = "";
+                                                for(int i=0; i<selectedPsds.size(); i++){
+                                                    PsdButton indexPsd = selectedPsds.get(i);
+                                                    if(i<selectedPsds.size()-1){
+                                                        psdNames+=indexPsd.name+",";
+                                                    }
+                                                    else{
+                                                        psdNames+=indexPsd.name;
+                                                    }
+                                                }
+                                                psdLabel = new JLabel(psdNames+": ",JLabel.RIGHT);
+                                            }
+                                            else{
+                                                String psdNames = "";
+                                                for(int i=0; i<3; i++){
+                                                    PsdButton indexPsd = selectedPsds.get(i);
+                                                    if(i<2){
+                                                        psdNames+=indexPsd.name+",";
+                                                    }
+                                                    else{
+                                                        psdNames+=indexPsd.name;
+                                                    }
+                                                }
+                                                String lastPsdName = selectedPsds.get(selectedPsds.size()-1).name;
+                                                psdLabel = new JLabel(psdNames+"..."+lastPsdName+": ",JLabel.RIGHT);
+                                            }
+
+                                            TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
+                                            textBorder.setTitleJustification(TitledBorder.CENTER);
+                                            JTextField cLimitText = new JTextField(9);
+                                            cLimitText.setBackground(psdSettingsPanel.getBackground());
+                                            cLimitText.setHorizontalAlignment(JTextField.CENTER);
+                                            cLimitText.setBorder(textBorder);
+                                            boolean sameLimit=true;
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
+                                                    sameLimit=false;
+                                                }
+                                            }
+                                            if(sameLimit){
+                                                cLimitText.setText(String.valueOf(tempBtn.charLimit));
+                                            }
+                                            cLimitText.addFocusListener(new FocusListener(){
+                                                public void focusGained(FocusEvent f){
+                                                    cLimitText.setText("");
+                                                }
+                                                public void focusLost(FocusEvent f){
+                                                    try{
+                                                        int cLimit = Integer.valueOf(cLimitText.getText());
+                                                        for(PsdButton psd : psds){
+                                                            if(psd.selected){   
+                                                                psd.charLimit= cLimit;
+                                                            }
+                                                        }
+                                                    } catch(NumberFormatException e){
+                                                        boolean sameLimit=true;
+                                                        for(PsdButton psd : psds){
+                                                            if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
+                                                                sameLimit=false;
+                                                            }
+                                                        }
+                                                        if(sameLimit){
+                                                            cLimitText.setText(String.valueOf(tempBtn.charLimit));
+                                                        }
+                                                        else{
+                                                            cLimitText.setText("");
+                                                        }
+                                                    }
+                                                }
+                                            });
+
+                                            textBorder = BorderFactory.createTitledBorder("altName");
+                                            textBorder.setTitleJustification(TitledBorder.CENTER);
+                                            JTextField altNameText = new JTextField(9);
+                                            altNameText.setBackground(psdSettingsPanel.getBackground());
+                                            altNameText.setHorizontalAlignment(JTextField.CENTER);
+                                            altNameText.setBorder(textBorder);
+                                            altNameText.setText(tempBtn.altName);
+                                            altNameText.addFocusListener(new FocusListener(){
+                                                public void focusGained(FocusEvent f){
+                                                    altNameText.setText("");
+                                                }
+                                                public void focusLost(FocusEvent f){
+                                                    tempBtn.altName=altNameText.getText();
+                                                }
+                                            });
+
+                                            textBorder = BorderFactory.createTitledBorder("replace");
+                                            textBorder.setTitleJustification(TitledBorder.CENTER);
+                                            JTextField replaceText = new JTextField(9);
+                                            replaceText.setBackground(psdSettingsPanel.getBackground());
+                                            replaceText.setHorizontalAlignment(JTextField.CENTER);
+                                            replaceText.setBorder(textBorder);
+                                            boolean sameReplace = true;
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
+                                                    sameReplace=false;
+                                                }
+                                            }
+                                            if(sameReplace){
+                                                replaceText.setText(tempBtn.replaceString);
+                                            }
+                                            replaceText.addFocusListener(new FocusListener(){
+                                                public void focusGained(FocusEvent f){
+                                                    replaceText.setText("");
+                                                }
+                                                public void focusLost(FocusEvent f){
+                                                    if(replaceText.getText().length()==0){
+                                                        boolean sameReplace = true;
+                                                        for(PsdButton psd : psds){
+                                                            if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
+                                                                sameReplace=false;
+                                                            }
+                                                        }
+                                                        if(sameReplace){
+                                                            replaceText.setText(tempBtn.replaceString);
+                                                        }
+                                                        else{
+                                                            replaceText.setText("");
+                                                        }
+                                                    }
+                                                    else{
+                                                        for(PsdButton psd : psds){
+                                                            if(psd.selected){
+                                                                psd.replaceString=replaceText.getText();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            });
+
+                                            psdSettingsPanel.add(psdLabel);
+                                            psdSettingsPanel.add(cLimitText);
+                                            int numSelected=0;
+                                            for(PsdButton psd: psds){
+                                                if(psd.selected){
+                                                    numSelected++;
+                                                }
+                                            }
+                                            if(numSelected<2){
+                                                psdSettingsPanel.add(altNameText);
+                                            }
+                                            psdSettingsPanel.add(replaceText);
+                                            psdSettingsPanel.setVisible(true);
+                                        }
+                                        frame.validate();
+                                        frame.repaint();
+                                    }
+                                });
+                                
+                                tempBtn.addMouseMotionListener(new MouseAdapter(){
+                                    public void mouseDragged(MouseEvent m){
+                                        PsdButton button = (PsdButton) m.getSource();
+                                        if(!button.selected){
+                                            tempBtn.setTransferHandler(new PsdExportTransferHandler(new PsdButton[]{tempBtn}));
+                                            tempBtn.setEnabled(false);
+                                            tempBtn.setEnabled(true);
+                                        }
+                                        else{
+                                            ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected){
+                                                    selectedPsds.add(psd);
+                                                }
+                                            }
+                                            tempBtn.setTransferHandler(new PsdExportTransferHandler(selectedPsds.toArray(new PsdButton[0])));
+                                            tempBtn.setEnabled(false);
+                                            tempBtn.setEnabled(true);
+                                        }
+                                        TransferHandler handle = button.getTransferHandler();
+                                        handle.exportAsDrag(button, m, TransferHandler.COPY);
+                                    }
+                                });
+                                psds.add(tempBtn);
+                                buttonPanel.add(tempBtn);
+                                if(buttonPanel.getComponentCount()<10){
+                                    ((GridLayout)buttonPanel.getLayout()).setColumns(buttonPanel.getComponentCount());
+                                }
+                                else{
+                                    ((GridLayout)buttonPanel.getLayout()).setColumns(10);
+                                }
+                            }
+                        }
+                        psdPanel.removeAll();
+                        psdSettingsPanel.setVisible(false);
+                        psdPanel.add(BorderLayout.CENTER,buttonPanel);
+                        psdPanel.add(BorderLayout.SOUTH,psdSettingsPanel);
+                        frame.validate();
+                        frame.repaint();
+                        if(start&&startStep==1){
+                            startStep=2;
+                            stepLabel.setText("Step 2: Add User");
+                            detailPane.setText("Now, add a user, a.k.a the person that requested the cards in the search bar.\nThe format for adding a new user is:\n \"defaultName,alternateName\"\nLet's start by adding yourself as a user.\n Type in your default and alternate names in the above format.\n I.e. this is how mine would look. DawnofNyx,Dawn\nOnce you're done, just hit enter.");
+                            tutFrame.pack();
+                            m11.setEnabled(false);
+                            search.setEnabled(true);
+                            searchList.setEnabled(false);
+                            for(PsdButton psd : psds){
+                                psd.setEnabled(false);
+                            }
+                            tutFrame.validate();
+                            tutFrame.repaint();
+                        }
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(frame, "Please select all the sample psds\n1.psd,2.psd, and 3.psd", "Missing Samples Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        m31.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
+                    start=true;
+                    startStep=1;
+                    m12.setEnabled(false);
+                    m2.setEnabled(false);
+                    m3.setEnabled(false);
+                    search.setEnabled(false);
+                    psds.clear();
+                    addedUsers.clear();
+                    buttonPanel.removeAll();
+                    psdPanel.removeAll();
+                    listedUsersPanel.removeAll();
+                    frame.requestFocusInWindow();
+                    tutFrame = new JFrame("Tutorial Window");
+                    tutFrame.setResizable(false);
+                    tutFrame.setAlwaysOnTop(true);
+                    stepLabel = new JLabel();
+                    stepLabel.setHorizontalAlignment(JLabel.CENTER);
+                    stepLabel.setForeground(Color.CYAN);
+                    stepLabel.setText("Step 1: Open PSDs");
+                    tutFrame.add(BorderLayout.NORTH,stepLabel);
+                    detailPane = new JTextPane();
+                    StyledDocument doc = detailPane.getStyledDocument();
+                    SimpleAttributeSet center = new SimpleAttributeSet();
+                    StyleConstants.setAlignment(center,StyleConstants.ALIGN_CENTER);
+                    doc.setParagraphAttributes(0,doc.getLength(),center,false);
+                    detailPane.setEditable(false);
+                    detailPane.setText("First, open all the sample psds that I included with the program.\nFile->Open PSDs->1,2,3.psd");
+                    tutFrame.add(BorderLayout.CENTER,detailPane);
+                    tutFrame.pack();
+                    tutFrame.setLocationRelativeTo(frame);
+                    tutFrame.setLocation(frame.getWidth(),0);
+                    tutFrame.setVisible(true);
+                    tutFrame.addWindowListener(new WindowAdapter(){
+                        public void windowClosing(WindowEvent w){
+                            start=false;
+                            startStep=1;
+                            m11.setEnabled(true);
+                            m12.setEnabled(true);
+                            m13.setEnabled(true);
+                            m2.setEnabled(true);
+                            m3.setEnabled(true);
+                            search.setEnabled(true);
+                            m1.setEnabled(true);
+                            searchList.setEnabled(true);
+                            for(PsdButton psd : psds){
+                                psd.setEnabled(true);
+                            }
+                        }
+                        public void windowClosed(WindowEvent w){
+                            start=false;
+                            startStep=1;
+                            m11.setEnabled(true);
+                            m12.setEnabled(true);
+                            m13.setEnabled(true);
+                            m2.setEnabled(true);
+                            m3.setEnabled(true);
+                            search.setEnabled(true);
+                            m1.setEnabled(true);
+                            searchList.setEnabled(true);
+                            for(PsdButton psd : psds){
+                                psd.setEnabled(true);
+                            }
+                        }
+                    });
+
+                }
+            }
+        });  
        
        saveData = new File("saveData.txt");
        try{
@@ -1156,6 +1353,11 @@ public class Main
                    found_photoshop=false;
                    photoFile=null;
                    getPhotoFile();
+                   if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
+                       for(ActionListener a : m31.getActionListeners()){
+                           a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
+                       }
+                   }
                 }
                 else{
                     scriptsFolder=new File(path);
@@ -1166,11 +1368,18 @@ public class Main
                 found_photoshop=false;
                 photoFile=null;
                 getPhotoFile();
+                if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
+                    if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
+                        for(ActionListener a : m31.getActionListeners()){
+                            a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
+                        }
+                    }
+                }
             }
 
         } catch(IOException e){
             System.out.println("Something went wrong. >-<");
-        }       
+        }     
     }
 
     private static boolean isNumber(String s){
@@ -1204,28 +1413,47 @@ public class Main
                 return user;
             }
         }
+        CardUser userPanel = null;
         if(shortName!=null){
-            CardUser userPanel = new CardUser(longName,shortName);
-            addedUsers.add(userPanel);
-            TitledBorder nameBorder  = BorderFactory.createTitledBorder(longName);
-            nameBorder.setTitleJustification(TitledBorder.CENTER);
-            userPanel.setBorder(nameBorder);
-            listedUsersPanel.add(userPanel);
-            frame.validate();
-            frame.repaint();
-            return userPanel;
+            userPanel = new CardUser(longName,shortName);
         }
         else{
-            CardUser userPanel = new CardUser(longName);
-            addedUsers.add(userPanel);
-            TitledBorder nameBorder  = BorderFactory.createTitledBorder(longName);
-            nameBorder.setTitleJustification(TitledBorder.CENTER);
-            userPanel.setBorder(nameBorder);
-            listedUsersPanel.add(userPanel);
-            frame.validate();
-            frame.repaint();
-            return userPanel;
-        } 
+            userPanel = new CardUser(longName);
+        }
+        addedUsers.add(userPanel);
+        listedUsersPanel.add(userPanel);
+        TitledBorder nameBorder  = BorderFactory.createTitledBorder(longName);
+        nameBorder.setTitleJustification(TitledBorder.CENTER);
+        userPanel.setBorder(nameBorder);
+        userPanel.cardList.addPropertyChangeListener(new PropertyChangeListener(){
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(start&&startStep==3){
+                    startStep=4;
+                    stepLabel.setText("Step 4: PSD Settings");
+                    detailPane.setText("If you click on any of the psds at the top, you'll see a settings panel.\nHere is where you can set: \n\"charLimit\", the max length of a name.\n\"altName\",the name of your card on the request site. (Only if you're reading webpage)\n\"replace\",the word to replace in your psds text layers with the requester's name.\nAll of these are set correctly for the moment.\nPress Next when you're ready to move on.");
+                    JButton nxt = new JButton("Next");
+                    nxt.addActionListener(new ActionListener(){
+                        public void actionPerformed(ActionEvent a){
+                            startStep=5;
+                            stepLabel.setText("Step 5: Save Script");
+                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. DemonSlayerEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                            tutFrame.remove(nxt);
+                            tutFrame.pack();
+                            tutFrame.validate();
+                            tutFrame.repaint();
+                            
+                        }
+                    });
+                    tutFrame.add(BorderLayout.SOUTH,nxt);
+                    tutFrame.pack();
+                }
+            }
+            
+        });
+        frame.validate();
+        frame.repaint();
+        return userPanel;
     }
     
     private static void getPhotoFile(){
