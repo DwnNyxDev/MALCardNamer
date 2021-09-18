@@ -1353,11 +1353,9 @@ public class Main
                    found_photoshop=false;
                    photoFile=null;
                    getPhotoFile();
-                   if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
-                       for(ActionListener a : m31.getActionListeners()){
-                           a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
-                       }
-                   }
+                    for(ActionListener a : m31.getActionListeners()){
+                        a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
+                    }
                 }
                 else{
                     scriptsFolder=new File(path);
@@ -1368,12 +1366,8 @@ public class Main
                 found_photoshop=false;
                 photoFile=null;
                 getPhotoFile();
-                if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
-                    if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
-                        for(ActionListener a : m31.getActionListeners()){
-                            a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
-                        }
-                    }
+                for(ActionListener a : m31.getActionListeners()){
+                    a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
                 }
             }
 
