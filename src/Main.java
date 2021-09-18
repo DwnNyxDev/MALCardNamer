@@ -489,6 +489,7 @@ public class Main
                                                     }
                                                 });
                                                 tutFrame.add(BorderLayout.SOUTH,done);
+                                                tutFrame.pack();
                                             }
                                             JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
                                         }
