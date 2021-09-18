@@ -481,7 +481,7 @@ public class Main
                                             if(start&&startStep==5){
                                                 startStep=6;
                                                 stepLabel.setText("Step 6: Run Script in Photoshop");
-                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Click Done to close the tutorial.");
+                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
                                                 JButton done = new JButton("Done");
                                                 done.addActionListener(new ActionListener(){
                                                     public void actionPerformed(ActionEvent a){
