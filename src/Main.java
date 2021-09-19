@@ -69,7 +69,7 @@ public class Main
     private static JFrame tutFrame;
     private static JLabel stepLabel;
     private static JTextPane detailPane;
-    private static int saveStep;
+    private static boolean manualTut;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -121,199 +121,199 @@ public class Main
                     scrollPane.setBorder(contentsBorder);
                     JButton done = new JButton("Done");
                     JButton cancel = new JButton("Cancel");
-                    
+
+                    if(start&&startStep==2&&!manualTut){
+                        startStep=3;
+                        stepLabel.setText("Step 3: Card Line Name");
+                        detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
+                        done.setEnabled(false);
+                        contents.setEnabled(false);
+                    }
+
+                    cln.getDocument().addDocumentListener(new DocumentListener(){
+                        @Override
+                        public void insertUpdate(DocumentEvent e) {
+                            if(cln.getText().equals("DawnofNyx")){
+                                startStep=4;
+                                stepLabel.setText("Step 4: Topic Page Contents");
+                                detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
+                                done.setEnabled(true);
+                                contents.setEnabled(true);
+                            }
+                            else{
+                                startStep=3;
+                                stepLabel.setText("Step 3: Card Line Name");
+                                detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
+                                done.setEnabled(false);
+                                contents.setEnabled(false);
+                            }
+                        }
+
+                        @Override
+                        public void removeUpdate(DocumentEvent e) {
+                            if(cln.getText().equals("DawnofNyx")){
+                                startStep=4;
+                                stepLabel.setText("Step 4: Topic Page Contents");
+                                detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
+                                done.setEnabled(true);
+                                contents.setEnabled(true);
+                            }
+                            else{
+                                startStep=3;
+                                stepLabel.setText("Step 3: Card Line Name");
+                                detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
+                                done.setEnabled(false);
+                                contents.setEnabled(false);
+                            }
+                        }
+
+                        @Override
+                        public void changedUpdate(DocumentEvent e) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+                    });
+
                     done.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent a){
-                            boolean searchForNames=false;
-                            boolean searchForCards=false;
-                            String firstName=null;
-                            String secondName=null;
-                            CardUser newUser=null;
-                            String cardMaker = cln.getText();
-                            if(cardMaker!=null&&cardMaker.length()>0){
-                                for(var i=0; i<contents.getText().split("\\n").length;i++){
-                                    String nextLine = contents.getText().split("\\n")[i];
-                                    if(nextLine.contains("Posts:")){
-                                        searchForNames=true;
-                                        searchForCards=false;
-                                        firstName=null;   
-                                        secondName=null; 
-                                        newUser=null;
-                                    }
-                                    if(searchForNames){
-                                        if((nextLine.contains("name")||nextLine.contains("Name"))){
-                                            int nameIndex = nextLine.toLowerCase().indexOf("name");
-                                            String firstNameLine = nextLine.substring(nameIndex+4);
-                                            if(firstNameLine.indexOf(":")!=-1){
-                                                firstNameLine = firstNameLine.substring(firstNameLine.indexOf(":"));
-                                            }
-                                            firstName=firstNameLine.replace(":","").trim();
-                                            if(firstName.contains(",")){
-                                                secondName=firstName.substring(firstName.indexOf(",")+1);
-                                                firstName=firstName.substring(0,firstName.indexOf(","));
-                                            }
-                                            else if(firstName.contains("/")){
-                                                secondName=firstName.substring(firstName.indexOf("/")+1);
-                                                firstName=firstName.substring(0,firstName.indexOf("/"));
-                                            }
-                                            else if(firstName.contains("|")){
-                                                secondName=firstName.substring(firstName.indexOf("|")+1);
-                                                firstName=firstName.substring(0,firstName.indexOf("/"));
-                                            }
-                                            else{
-                                                String altLine = contents.getText().split("\\n")[i+1];
-                                                if((altLine.contains("name")||altLine.contains("Name"))){
-                                                    int altIndex = altLine.toLowerCase().indexOf("name");
-                                                    String secondNameLine = altLine.substring(altIndex+4);
-                                                    if(secondNameLine.indexOf(":")!=-1){
-                                                        secondNameLine = secondNameLine.substring(secondNameLine.indexOf(":"));
-                                                    }
-                                                    secondName=secondNameLine.replace(":","").trim();
-                                                    if(secondName.contains(",")){
-                                                        secondName=secondName.substring(0,secondName.indexOf(","));
-                                                    }
-                                                    else if(secondName.contains("/")){
-                                                        secondName=secondName.substring(0,secondName.indexOf("/"));
-                                                    }
-                                                    else if(secondName.contains("|")){
-                                                        secondName=secondName.substring(0,secondName.indexOf("|"));
+                            if(!start||(cln.getText().equals("DawnofNyx"))){
+                                boolean searchForNames=false;
+                                boolean searchForCards=false;
+                                String firstName=null;
+                                String secondName=null;
+                                CardUser newUser=null;
+                                String cardMaker = cln.getText();
+                                if(cardMaker!=null&&cardMaker.length()>0){
+                                    for(var i=0; i<contents.getText().split("\\n").length;i++){
+                                        String nextLine = contents.getText().split("\\n")[i];
+                                        if(nextLine.contains("Posts:")){
+                                            searchForNames=true;
+                                            searchForCards=false;
+                                            firstName=null;   
+                                            secondName=null; 
+                                            newUser=null;
+                                        }
+                                        if(searchForNames){
+                                            if((nextLine.contains("name")||nextLine.contains("Name"))){
+                                                int nameIndex = nextLine.toLowerCase().indexOf("name");
+                                                String firstNameLine = nextLine.substring(nameIndex+4);
+                                                if(firstNameLine.indexOf(":")!=-1){
+                                                    firstNameLine = firstNameLine.substring(firstNameLine.indexOf(":"));
+                                                }
+                                                firstName=firstNameLine.replace(":","").trim();
+                                                if(firstName.contains(",")){
+                                                    secondName=firstName.substring(firstName.indexOf(",")+1);
+                                                    firstName=firstName.substring(0,firstName.indexOf(","));
+                                                }
+                                                else if(firstName.contains("/")){
+                                                    secondName=firstName.substring(firstName.indexOf("/")+1);
+                                                    firstName=firstName.substring(0,firstName.indexOf("/"));
+                                                }
+                                                else if(firstName.contains("|")){
+                                                    secondName=firstName.substring(firstName.indexOf("|")+1);
+                                                    firstName=firstName.substring(0,firstName.indexOf("/"));
+                                                }
+                                                else{
+                                                    String altLine = contents.getText().split("\\n")[i+1];
+                                                    if((altLine.contains("name")||altLine.contains("Name"))){
+                                                        int altIndex = altLine.toLowerCase().indexOf("name");
+                                                        String secondNameLine = altLine.substring(altIndex+4);
+                                                        if(secondNameLine.indexOf(":")!=-1){
+                                                            secondNameLine = secondNameLine.substring(secondNameLine.indexOf(":"));
+                                                        }
+                                                        secondName=secondNameLine.replace(":","").trim();
+                                                        if(secondName.contains(",")){
+                                                            secondName=secondName.substring(0,secondName.indexOf(","));
+                                                        }
+                                                        else if(secondName.contains("/")){
+                                                            secondName=secondName.substring(0,secondName.indexOf("/"));
+                                                        }
+                                                        else if(secondName.contains("|")){
+                                                            secondName=secondName.substring(0,secondName.indexOf("|"));
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            if(firstName.length()<1&&secondName!=null&secondName.length()>0){
-                                                firstName=secondName;
-                                                secondName=null;
-                                            }
-                                            if(!firstName.equals("[")){
-                                                if(secondName!=null){
-                                                    secondName=secondName.trim();
+                                                if(firstName.length()<1&&secondName!=null&secondName.length()>0){
+                                                    firstName=secondName;
+                                                    secondName=null;
                                                 }
-                                                newUser=createUser(firstName, secondName);
-                                                searchForNames=false;
-                                                searchForCards=true;
+                                                if(!firstName.equals("[")){
+                                                    if(secondName!=null){
+                                                        secondName=secondName.trim();
+                                                    }
+                                                    newUser=createUser(firstName, secondName);
+                                                    searchForNames=false;
+                                                    searchForCards=true;
+                                                }
                                             }
                                         }
-                                    }
-                                    else if(searchForCards){
-                                        if(newUser!=null){
-                                            if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())&&nextLine.toLowerCase().contains("all")){
-                                                for(PsdButton psd: psds){
-                                                    if(!newUser.cards.contains(psd)){
-                                                        newUser.cards.add(psd);
-                                                        newUser.model.addElement(psd.name);
+                                        else if(searchForCards){
+                                            if(newUser!=null){
+                                                if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())&&nextLine.toLowerCase().contains("all")){
+                                                    for(PsdButton psd: psds){
+                                                        if(!newUser.cards.contains(psd)){
+                                                            newUser.cards.add(psd);
+                                                            newUser.model.addElement(psd.name);
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            else{
-                                                for(PsdButton psd : psds){
-                                                    if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
-                                                        if(isNumber(psd.name.replace(".psd",""))){
-                                                            ArrayList<String> numsInLine = new ArrayList<String>();
-                                                            for(int start=0; start<nextLine.length(); start++){
-                                                                if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
-                                                                    String newNum="";
-                                                                    int end=start+1;
-                                                                    int endIndex=0;
-                                                                    while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                        endIndex++;
-                                                                    }
-                                                                    newNum=nextLine.substring(start, end+endIndex);
-                                                                    numsInLine.add(newNum);
-                                                                    start=end;
-                                                                }
-                                                            }
-                                                            if(numsInLine.contains(psd.name.replace(".psd",""))){
-                                                                if(!newUser.cards.contains(psd)){
-                                                                    newUser.cards.add(psd);
-                                                                    newUser.model.addElement(psd.name);
-                                                                }
-                                                            }
-                                                        }
-                                                        else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
-                                                            if(!newUser.cards.contains(psd)){
-                                                                newUser.cards.add(psd);
-                                                                newUser.model.addElement(psd.name);
-                                                            }
-                                                        }
-                                                        else{
-                                                            String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
-                                                            if(psd.altName.length()>0){
-                                                                if(isNumber(psd.altName)){
-                                                                    ArrayList<String> numsInLine = new ArrayList<String>();
-                                                                    for(int start=0; start<nextLine.length(); start++){
-                                                                        if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
-                                                                            String newNum="";
-                                                                            int end=start+1;
-                                                                            int endIndex=0;
-                                                                            while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                                endIndex++;
-                                                                            }
-                                                                            newNum=nextLine.substring(start, end+endIndex);
-                                                                            numsInLine.add(newNum);
-                                                                            start=end;
+                                                else{
+                                                    for(PsdButton psd : psds){
+                                                        if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
+                                                            if(isNumber(psd.name.replace(".psd",""))){
+                                                                ArrayList<String> numsInLine = new ArrayList<String>();
+                                                                for(int start=0; start<nextLine.length(); start++){
+                                                                    if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                                        String newNum="";
+                                                                        int end=start+1;
+                                                                        int endIndex=0;
+                                                                        while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                            endIndex++;
                                                                         }
-                                                                    }
-                                                                    if(numsInLine.contains(psd.altName)){
-                                                                        if(!newUser.cards.contains(psd)){
-                                                                            newUser.cards.add(psd);
-                                                                            newUser.model.addElement(psd.name);
-                                                                        }
+                                                                        newNum=nextLine.substring(start, end+endIndex);
+                                                                        numsInLine.add(newNum);
+                                                                        start=end;
                                                                     }
                                                                 }
-                                                                else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
+                                                                if(numsInLine.contains(psd.name.replace(".psd",""))){
                                                                     if(!newUser.cards.contains(psd)){
                                                                         newUser.cards.add(psd);
                                                                         newUser.model.addElement(psd.name);
                                                                     }
                                                                 }
                                                             }
-                                                        }
-                                                    }
-                                                }
-                                                ArrayList<String> basePSDs = new ArrayList<String>();
-                                                for(PsdButton psd : psds){
-                                                    int index=1;
-                                                    String endNumber="";
-                                                    String psdName = psd.name.replace(".psd","");
-                                                    if(!isNumber(psdName)){
-                                                        while(psdName.length()-index>=0&&Character.isDigit(psdName.charAt(psdName.length()-index))){
-                                                            endNumber+=psdName.charAt(psdName.length()-index);
-                                                            index++;
-                                                        }
-                                                        if(endNumber.length()>0){
-                                                            String basePSD = psdName.substring(0, psdName.length()-endNumber.length());
-                                                            if(!basePSDs.contains(basePSD)){
-                                                                basePSDs.add(basePSD);
+                                                            else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
+                                                                if(!newUser.cards.contains(psd)){
+                                                                    newUser.cards.add(psd);
+                                                                    newUser.model.addElement(psd.name);
+                                                                }
                                                             }
-                                                        }
-                                                    }
-                                                }
-                                                if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
-                                                    for(String base : basePSDs){
-                                                        int fromIndex=0;
-                                                        while(nextLine.indexOf(base,fromIndex)!=-1){
-                                                            ArrayList<String> nums = new ArrayList<String>();
-                                                            for(int start=nextLine.indexOf(base,fromIndex)+base.length(); start<nextLine.length(); start++){
-                                                                if(Character.isDigit(nextLine.charAt(start))){
-                                                                    String newNum="";
-                                                                    int end=start+1;
-                                                                    int endIndex=0;
-                                                                    while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                        endIndex++;
+                                                            else{
+                                                                String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
+                                                                if(psd.altName.length()>0){
+                                                                    if(isNumber(psd.altName)){
+                                                                        ArrayList<String> numsInLine = new ArrayList<String>();
+                                                                        for(int start=0; start<nextLine.length(); start++){
+                                                                            if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                                                String newNum="";
+                                                                                int end=start+1;
+                                                                                int endIndex=0;
+                                                                                while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                                    endIndex++;
+                                                                                }
+                                                                                newNum=nextLine.substring(start, end+endIndex);
+                                                                                numsInLine.add(newNum);
+                                                                                start=end;
+                                                                            }
+                                                                        }
+                                                                        if(numsInLine.contains(psd.altName)){
+                                                                            if(!newUser.cards.contains(psd)){
+                                                                                newUser.cards.add(psd);
+                                                                                newUser.model.addElement(psd.name);
+                                                                            }
+                                                                        }
                                                                     }
-                                                                    newNum=nextLine.substring(start, end+endIndex);
-                                                                    nums.add(newNum);
-                                                                    start=end;
-                                                                }
-                                                                else if(Character.isLetter(nextLine.charAt(start))){
-                                                                    break;
-                                                                }
-                                                            }
-                                                            for(String num : nums){
-                                                                String newName = base+num;
-                                                                for(PsdButton psd: psds){
-                                                                    String psdName = psd.name.replace(".psd","");
-                                                                    if(psdName.equals(newName)){
+                                                                    else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
                                                                         if(!newUser.cards.contains(psd)){
                                                                             newUser.cards.add(psd);
                                                                             newUser.model.addElement(psd.name);
@@ -321,18 +321,88 @@ public class Main
                                                                     }
                                                                 }
                                                             }
-                                                            fromIndex=nextLine.indexOf(base,fromIndex)+1;
+                                                        }
+                                                    }
+                                                    ArrayList<String> basePSDs = new ArrayList<String>();
+                                                    for(PsdButton psd : psds){
+                                                        int index=1;
+                                                        String endNumber="";
+                                                        String psdName = psd.name.replace(".psd","");
+                                                        if(!isNumber(psdName)){
+                                                            while(psdName.length()-index>=0&&Character.isDigit(psdName.charAt(psdName.length()-index))){
+                                                                endNumber+=psdName.charAt(psdName.length()-index);
+                                                                index++;
+                                                            }
+                                                            if(endNumber.length()>0){
+                                                                String basePSD = psdName.substring(0, psdName.length()-endNumber.length());
+                                                                if(!basePSDs.contains(basePSD)){
+                                                                    basePSDs.add(basePSD);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
+                                                        for(String base : basePSDs){
+                                                            int fromIndex=0;
+                                                            while(nextLine.indexOf(base,fromIndex)!=-1){
+                                                                ArrayList<String> nums = new ArrayList<String>();
+                                                                for(int start=nextLine.indexOf(base,fromIndex)+base.length(); start<nextLine.length(); start++){
+                                                                    if(Character.isDigit(nextLine.charAt(start))){
+                                                                        String newNum="";
+                                                                        int end=start+1;
+                                                                        int endIndex=0;
+                                                                        while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                            endIndex++;
+                                                                        }
+                                                                        newNum=nextLine.substring(start, end+endIndex);
+                                                                        nums.add(newNum);
+                                                                        start=end;
+                                                                    }
+                                                                    else if(Character.isLetter(nextLine.charAt(start))){
+                                                                        break;
+                                                                    }
+                                                                }
+                                                                for(String num : nums){
+                                                                    String newName = base+num;
+                                                                    for(PsdButton psd: psds){
+                                                                        String psdName = psd.name.replace(".psd","");
+                                                                        if(psdName.equals(newName)){
+                                                                            if(!newUser.cards.contains(psd)){
+                                                                                newUser.cards.add(psd);
+                                                                                newUser.model.addElement(psd.name);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                fromIndex=nextLine.indexOf(base,fromIndex)+1;
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                    dialog.dispose();
+                                    if(addedUsers.size()>0&&addedUsers.get(0).cards.size()>0){
+                                        if(start&&startStep==4){
+                                            startStep=5;
+                                            stepLabel.setText("Step 5: Save Script");
+                                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                                        }
+                                    }
+                                    else{
+                                        if(start){
+                                            tutFrame.dispose();
+                                        }
+                                        JOptionPane.showMessageDialog(frame, "Something went wrong with reading yoru requests.", "No Requests Found", JOptionPane.ERROR_MESSAGE);
+                                    }
                                 }
-                                dialog.dispose();
+                                else{
+                                    JOptionPane.showMessageDialog(frame,"Please input a valid card line name","Card Line Name Error",JOptionPane.ERROR_MESSAGE);
+                                }
                             }
                             else{
-                                JOptionPane.showMessageDialog(frame,"Please input a valid card line name","Card Line Name Error",JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(frame,"Please input DawnofNyx as the card line name","DawnofNyx Missing Error",JOptionPane.ERROR_MESSAGE);
                             }
                         }
                     });
@@ -345,7 +415,9 @@ public class Main
                     dialog.add(BorderLayout.CENTER,scrollPane);
                     JPanel btnPanel = new JPanel(new FlowLayout());
                     btnPanel.add(done);
-                    btnPanel.add(cancel);
+                    if(!start){
+                        btnPanel.add(cancel);
+                    }
                     dialog.add(BorderLayout.SOUTH,btnPanel);
                     dialog.pack();
                     dialog.setLocationRelativeTo(frame);
@@ -480,7 +552,12 @@ public class Main
                                             if(start&&startStep==5){
                                                 startStep=6;
                                                 stepLabel.setText("Step 6: Run Script in Photoshop");
-                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                                if(manualTut){
+                                                    detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                                }
+                                                else{
+                                                    detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the automatic tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                                }
                                                 JButton done = new JButton("Done");
                                                 done.addActionListener(new ActionListener(){
                                                     public void actionPerformed(ActionEvent a){
@@ -1250,11 +1327,19 @@ public class Main
                         frame.repaint();
                         if(start&&startStep==1){
                             startStep=2;
-                            stepLabel.setText("Step 2: Add User");
-                            detailPane.setText("Now, add a user, a.k.a the person that requested the cards in the search bar.\nThe format for adding a new user is:\n \"defaultName,alternateName\"\nLet's start by adding yourself as a user.\n Type in your default and alternate names in the above format.\n I.e. this is how mine would look. DawnofNyx,Dawn\nOnce you're done, just hit enter.");
+                            if(manualTut){
+                                stepLabel.setText("Step 2: Add User");
+                                detailPane.setText("Now, add a user, a.k.a the person that requested the cards in the search bar.\nThe format for adding a new user is:\n \"defaultName,alternateName\"\nLet's start by adding yourself as a user.\n Type in your default and alternate names in the above format.\n I.e. this is how mine would look. DawnofNyx,Dawn\nOnce you're done, just hit enter.");
+                                search.setEnabled(true);
+                            }
+                            else{
+                                stepLabel.setText("Step 2: Read Webpage");
+                                detailPane.setText("Now, if you haven't already, open the sample request page I made in the MALCardNamer club.\nCreate your own request and keep that webpage open.\nNow navigate to File->Read Webpage in the program and click it.");
+                                m12.setEnabled(true);
+                            }
                             tutFrame.pack();
                             m11.setEnabled(false);
-                            search.setEnabled(true);
+                            
                             searchList.setEnabled(false);
                             for(PsdButton psd : psds){
                                 psd.setEnabled(false);
@@ -1272,7 +1357,15 @@ public class Main
 
         m31.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if(JOptionPane.showConfirmDialog(frame,"Would you like to take a guided tutorial?","Tutorial",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){
+                Object[] options = {"Manual","Automatic","Cancel"};
+                int opt = JOptionPane.showOptionDialog(frame,"Would you like to take the manual or automatic tutorial?","Tutorial",JOptionPane.YES_NO_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE,null,options,options[0]);
+                if(opt==JOptionPane.YES_OPTION||opt==JOptionPane.NO_OPTION){
+                    if(opt==JOptionPane.YES_OPTION){
+                        manualTut=true;
+                    }
+                    else{
+                        manualTut=false;
+                    }
                     start=true;
                     startStep=1;
                     m12.setEnabled(false);
@@ -1303,7 +1396,7 @@ public class Main
                     tutFrame.add(BorderLayout.CENTER,detailPane);
                     tutFrame.pack();
                     tutFrame.setLocationRelativeTo(frame);
-                    tutFrame.setLocation(frame.getWidth(),0);
+                    tutFrame.setLocation(frame.getWidth()-tutFrame.getContentPane().getWidth(),0);
                     tutFrame.setVisible(true);
                     tutFrame.addWindowListener(new WindowAdapter(){
                         public void windowClosing(WindowEvent w){
@@ -1431,7 +1524,7 @@ public class Main
                         public void actionPerformed(ActionEvent a){
                             startStep=5;
                             stepLabel.setText("Step 5: Save Script");
-                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. DemonSlayerEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
                             tutFrame.remove(nxt);
                             tutFrame.pack();
                             tutFrame.validate();
