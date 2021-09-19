@@ -367,21 +367,27 @@ public class Main
                             File saveLocation = tempSaver.getSelectedFile();
                             InputStream in = getClass().getResourceAsStream("rename.jsx");
                             File renameFile = new File(scriptsFolder.getAbsolutePath()+"\\RenameMalCards.jsx");
+                            ArrayList<String> renameContents = new ArrayList<String>();
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                            boolean addToArray=true;
+                            String newLine = null;
                             try{
-                                if(!renameFile.createNewFile()){
-                                    renameFile.delete();
-                                    renameFile.createNewFile();
-                                }
+                                newLine = reader.readLine();
                             }
-                            catch( IOException e){
+                            catch(IOException e){
                                 error=true;
-                                JOptionPane.showMessageDialog(frame, e, "RenameFileError", JOptionPane.ERROR_MESSAGE);
-                            };
-                            if(!error){
-                                ArrayList<String> renameContents = new ArrayList<String>();
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                                boolean addToArray=true;
-                                String newLine = null;
+                                JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
+                            }
+                            while(newLine!=null&&!error){
+                                if(addToArray || newLine.equals("//start of code")){
+                                    renameContents.add(newLine+"\n");
+                                    if(newLine.equals("//start of data")){
+                                        addToArray=false;
+                                    }
+                                    else if(newLine.equals("//start of code")){
+                                        addToArray=true;
+                                    }
+                                }
                                 try{
                                     newLine = reader.readLine();
                                 }
@@ -389,113 +395,96 @@ public class Main
                                     error=true;
                                     JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
                                 }
-                                while(newLine!=null&&!error){
-                                    if(addToArray || newLine.equals("//start of code")){
-                                        renameContents.add(newLine+"\n");
-                                        if(newLine.equals("//start of data")){
-                                            addToArray=false;
-                                        }
-                                        else if(newLine.equals("//start of code")){
-                                            addToArray=true;
-                                        }
+                            }
+                            try {
+                                reader.close();
+                            } catch (IOException e) {
+                                error=true;
+                                JOptionPane.showMessageDialog(frame, e, "FileReaderCloseError", JOptionPane.ERROR_MESSAGE);
+                            }
+                            if(!error){
+                                ArrayList<String> data = new ArrayList<String>();
+                                data.add("var users = {\n");
+                                for(int i=0; i<addedUsers.size(); i++){
+                                    CardUser tempUser = addedUsers.get(i);
+                                    String cardInput = "    '"+i+"' : {'names':['"+tempUser.names[0]+"'";
+                                    if(tempUser.names.length>1){
+                                        cardInput+=",'"+tempUser.names[1]+"'";
                                     }
-                                    try{
-                                        newLine = reader.readLine();
-                                    }
-                                    catch(IOException e){
-                                        error=true;
-                                        JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
-                                    }
-                                }
-                                try {
-                                    reader.close();
-                                } catch (IOException e) {
-                                    error=true;
-                                    JOptionPane.showMessageDialog(frame, e, "FileReaderCloseError", JOptionPane.ERROR_MESSAGE);
-                                }
-                                if(!error){
-                                    ArrayList<String> data = new ArrayList<String>();
-                                    data.add("var users = {\n");
-                                    for(int i=0; i<addedUsers.size(); i++){
-                                        CardUser tempUser = addedUsers.get(i);
-                                        String cardInput = "    '"+i+"' : {'names':['"+tempUser.names[0]+"'";
-                                        if(tempUser.names.length>1){
-                                            cardInput+=",'"+tempUser.names[1]+"'";
-                                        }
-                                        cardInput+="],cards:[";
-                                        for(int j=0; j<tempUser.model.size(); j++){
-                                            if(j<tempUser.model.size()-1){
-                                                cardInput+="'"+String.valueOf(tempUser.model.get(j))+"',";
-                                            }
-                                            else{
-                                                cardInput+="'"+String.valueOf(tempUser.model.get(j))+"'";
-                                            }
-                                        }
-                                        cardInput+="]},\n";
-                                        data.add(cardInput);
-                                    }
-                                    data.add("};\n\n");
-                                    data.add("var psds = {\n");
-                                    for(int p=0; p<psds.size(); p++){
-                                        PsdButton psd = psds.get(p);
-                                        String psdInput;
-                                        if(!useGlobalSettings){
-                                            psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
+                                    cardInput+="],cards:[";
+                                    for(int j=0; j<tempUser.model.size(); j++){
+                                        if(j<tempUser.model.size()-1){
+                                            cardInput+="'"+String.valueOf(tempUser.model.get(j))+"',";
                                         }
                                         else{
-                                            psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+globalCLimit+",'replace':'"+globalReplaceString+"'";
+                                            cardInput+="'"+String.valueOf(tempUser.model.get(j))+"'";
                                         }
-                                        psdInput+="},\n";
-                                        data.add(psdInput);
                                     }
-                                    data.add("};\n\n");
-                                    String savePath = saveLocation.getAbsolutePath();
-                                    data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
-                                    for(PsdButton psd :psds){
-                                        data.add("app.open(new File('"+psd.file.getAbsolutePath().replace("\\","\\\\")+"'));\n");
+                                    cardInput+="]},\n";
+                                    data.add(cardInput);
+                                }
+                                data.add("};\n\n");
+                                data.add("var psds = {\n");
+                                for(int p=0; p<psds.size(); p++){
+                                    PsdButton psd = psds.get(p);
+                                    String psdInput;
+                                    if(!useGlobalSettings){
+                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
                                     }
-                                    renameContents.addAll(1,data);
-                                    FileWriter cmdWriter = null;
-                                    try {
-                                        cmdWriter = new FileWriter(renameFile);
-                                    } catch (IOException e) {
-                                        error=true;
-                                        JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                                    else{
+                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+globalCLimit+",'replace':'"+globalReplaceString+"'";
                                     }
-                                    if(!error){
-                                        for(String line: renameContents){
-                                            try {
-                                                cmdWriter.write(line);
-                                            } catch (IOException e) {
-                                                error=true;
-                                                JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
-                                            }
-                                        }
+                                    psdInput+="},\n";
+                                    data.add(psdInput);
+                                }
+                                data.add("};\n\n");
+                                String savePath = saveLocation.getAbsolutePath();
+                                data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
+                                for(PsdButton psd :psds){
+                                    data.add("app.open(new File('"+psd.file.getAbsolutePath().replace("\\","\\\\")+"'));\n");
+                                }
+                                renameContents.addAll(1,data);
+                                FileWriter cmdWriter = null;
+                                try {
+                                    cmdWriter = new FileWriter(renameFile);
+                                } catch (IOException e) {
+                                    error=true;
+                                    JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                                }
+                                if(!error){
+                                    for(String line: renameContents){
                                         try {
-                                            cmdWriter.close();
+                                            cmdWriter.write(line);
                                         } catch (IOException e) {
                                             error=true;
-                                            JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
-                                        }
-                                        if(!error){
-                                            if(start&&startStep==5){
-                                                startStep=6;
-                                                stepLabel.setText("Step 6: Run Script in Photoshop");
-                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
-                                                JButton done = new JButton("Done");
-                                                done.addActionListener(new ActionListener(){
-                                                    public void actionPerformed(ActionEvent a){
-                                                        tutFrame.dispose();
-                                                    }
-                                                });
-                                                tutFrame.add(BorderLayout.SOUTH,done);
-                                                tutFrame.pack();
-                                            }
-                                            JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
+                                            JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
+                                            break;
                                         }
                                     }
+                                    try {
+                                        cmdWriter.close();
+                                    } catch (IOException e) {
+                                        error=true;
+                                        JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                    if(!error){
+                                        if(start&&startStep==5){
+                                            startStep=6;
+                                            stepLabel.setText("Step 6: Run Script in Photoshop");
+                                            detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                            JButton done = new JButton("Done");
+                                            done.addActionListener(new ActionListener(){
+                                                public void actionPerformed(ActionEvent a){
+                                                    tutFrame.dispose();
+                                                }
+                                            });
+                                            tutFrame.add(BorderLayout.SOUTH,done);
+                                            tutFrame.pack();
+                                        }
+                                        JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
+                                    }
                                 }
-                            } 
+                            }
                         }
                     }
                 }
