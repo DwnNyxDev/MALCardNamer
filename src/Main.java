@@ -69,6 +69,7 @@ public class Main
     private static JFrame tutFrame;
     private static JLabel stepLabel;
     private static JTextPane detailPane;
+    private static int saveStep;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -107,8 +108,20 @@ public class Main
             public void actionPerformed(ActionEvent a){
                 if(psds.size()>0){
                     final JDialog dialog = new JDialog(frame,"Topic Contents",true);
+                    JTextField cln = new JTextField("Cards",15);
+                    cln.setHorizontalAlignment(JTextField.CENTER);
+                    TitledBorder clnBorder = BorderFactory.createTitledBorder("Card Line Name");
+                    clnBorder.setTitleJustification(TitledBorder.CENTER);
+                    cln.setBorder(clnBorder);
+                    cln.setBackground(dialog.getBackground());
                     JTextArea contents = new JTextArea(40,80);
+                    TitledBorder contentsBorder = BorderFactory.createTitledBorder("Topic Page Contents");
+                    contentsBorder.setTitleJustification(TitledBorder.CENTER);
+                    JScrollPane scrollPane = new JScrollPane(contents);
+                    scrollPane.setBorder(contentsBorder);
                     JButton done = new JButton("Done");
+                    JButton cancel = new JButton("Cancel");
+                    
                     done.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent a){
                             boolean searchForNames=false;
@@ -116,25 +129,25 @@ public class Main
                             String firstName=null;
                             String secondName=null;
                             CardUser newUser=null;
-                            String cardMaker = JOptionPane.showInputDialog(frame, "Your/Card Maker's Username?");
-                            for(var i=0; i<contents.getText().split("\\n").length;i++){
-                                String nextLine = contents.getText().split("\\n")[i];
-                                if(nextLine.contains("Posts:")){
-                                    searchForNames=true;
-                                    searchForCards=false;
-                                    firstName=null;   
-                                    secondName=null; 
-                                    newUser=null;
-                                }
-                                if(searchForNames){
-                                    if((nextLine.contains("name")||nextLine.contains("Name"))&&!(nextLine.contains("name=")||nextLine.contains("getElementsByTagName"))){
-                                        int nameIndex = nextLine.toLowerCase().indexOf("name");
-                                        String firstNameLine = nextLine.substring(nameIndex+4);
-                                        if(firstNameLine.indexOf(":")!=-1){
-                                            firstNameLine = firstNameLine.substring(firstNameLine.indexOf(":"));
-                                        }
-                                        firstName=firstNameLine.replace("</b>","").replace("<br>","").replace(":","").trim();
-                                        if(!firstName.contains("[b]")){
+                            String cardMaker = cln.getText();
+                            if(cardMaker!=null&&cardMaker.length()>0){
+                                for(var i=0; i<contents.getText().split("\\n").length;i++){
+                                    String nextLine = contents.getText().split("\\n")[i];
+                                    if(nextLine.contains("Posts:")){
+                                        searchForNames=true;
+                                        searchForCards=false;
+                                        firstName=null;   
+                                        secondName=null; 
+                                        newUser=null;
+                                    }
+                                    if(searchForNames){
+                                        if((nextLine.contains("name")||nextLine.contains("Name"))){
+                                            int nameIndex = nextLine.toLowerCase().indexOf("name");
+                                            String firstNameLine = nextLine.substring(nameIndex+4);
+                                            if(firstNameLine.indexOf(":")!=-1){
+                                                firstNameLine = firstNameLine.substring(firstNameLine.indexOf(":"));
+                                            }
+                                            firstName=firstNameLine.replace(":","").trim();
                                             if(firstName.contains(",")){
                                                 secondName=firstName.substring(firstName.indexOf(",")+1);
                                                 firstName=firstName.substring(0,firstName.indexOf(","));
@@ -149,13 +162,13 @@ public class Main
                                             }
                                             else{
                                                 String altLine = contents.getText().split("\\n")[i+1];
-                                                if((altLine.contains("name")||altLine.contains("Name"))&&!(altLine.contains("name=")||altLine.contains("getElementsByTagName"))){
+                                                if((altLine.contains("name")||altLine.contains("Name"))){
                                                     int altIndex = altLine.toLowerCase().indexOf("name");
                                                     String secondNameLine = altLine.substring(altIndex+4);
                                                     if(secondNameLine.indexOf(":")!=-1){
                                                         secondNameLine = secondNameLine.substring(secondNameLine.indexOf(":"));
                                                     }
-                                                    secondName=secondNameLine.replace("</b>","").replace("<br>","").replace(":","").trim();
+                                                    secondName=secondNameLine.replace(":","").trim();
                                                     if(secondName.contains(",")){
                                                         secondName=secondName.substring(0,secondName.indexOf(","));
                                                     }
@@ -180,96 +193,83 @@ public class Main
                                                 searchForCards=true;
                                             }
                                         }
-                                        else{
-                                            firstName=null;
-                                        }
                                     }
-                                }
-                                else if(searchForCards){
-                                    if(newUser!=null){
-                                        if(cardMaker!=null&&cardMaker.length()>0&&nextLine.toLowerCase().contains(cardMaker.toLowerCase())&&nextLine.toLowerCase().contains("all")){
-                                            for(PsdButton psd: psds){
-                                                if(!newUser.cards.contains(psd)){
-                                                    newUser.cards.add(psd);
-                                                    newUser.model.addElement(psd.name);
+                                    else if(searchForCards){
+                                        if(newUser!=null){
+                                            if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())&&nextLine.toLowerCase().contains("all")){
+                                                for(PsdButton psd: psds){
+                                                    if(!newUser.cards.contains(psd)){
+                                                        newUser.cards.add(psd);
+                                                        newUser.model.addElement(psd.name);
+                                                    }
                                                 }
                                             }
-                                        }
-                                        else{
-                                            for(PsdButton psd : psds){
-                                                if(cardMaker==null||cardMaker.length()==0){
-                                                    if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
-                                                        if(!newUser.cards.contains(psd)){
-                                                            newUser.cards.add(psd);
-                                                            newUser.model.addElement(psd.name);
-                                                        }
-                                                    }
-                                                }
-                                                else if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
-                                                    if(isNumber(psd.name.replace(".psd",""))){
-                                                        ArrayList<String> numsInLine = new ArrayList<String>();
-                                                        for(int start=0; start<nextLine.length(); start++){
-                                                            if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
-                                                                String newNum="";
-                                                                int end=start+1;
-                                                                int endIndex=0;
-                                                                while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                    endIndex++;
-                                                                }
-                                                                newNum=nextLine.substring(start, end+endIndex);
-                                                                numsInLine.add(newNum);
-                                                                start=end;
-                                                            }
-                                                        }
-                                                        if(numsInLine.contains(psd.name.replace(".psd",""))){
-                                                            if(!newUser.cards.contains(psd)){
-                                                                newUser.cards.add(psd);
-                                                                newUser.model.addElement(psd.name);
-                                                            }
-                                                        }
-                                                    }
-                                                    else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
-                                                        if(!newUser.cards.contains(psd)){
-                                                            newUser.cards.add(psd);
-                                                            newUser.model.addElement(psd.name);
-                                                        }
-                                                    }
-                                                    else{
-                                                        String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
-                                                        if(psd.altName.length()>0){
-                                                            if(isNumber(psd.altName)){
-                                                                ArrayList<String> numsInLine = new ArrayList<String>();
-                                                                for(int start=0; start<nextLine.length(); start++){
-                                                                    if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
-                                                                        String newNum="";
-                                                                        int end=start+1;
-                                                                        int endIndex=0;
-                                                                        while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
-                                                                            endIndex++;
-                                                                        }
-                                                                        newNum=nextLine.substring(start, end+endIndex);
-                                                                        numsInLine.add(newNum);
-                                                                        start=end;
+                                            else{
+                                                for(PsdButton psd : psds){
+                                                    if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
+                                                        if(isNumber(psd.name.replace(".psd",""))){
+                                                            ArrayList<String> numsInLine = new ArrayList<String>();
+                                                            for(int start=0; start<nextLine.length(); start++){
+                                                                if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                                    String newNum="";
+                                                                    int end=start+1;
+                                                                    int endIndex=0;
+                                                                    while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                        endIndex++;
                                                                     }
-                                                                }
-                                                                if(numsInLine.contains(psd.altName)){
-                                                                    if(!newUser.cards.contains(psd)){
-                                                                        newUser.cards.add(psd);
-                                                                        newUser.model.addElement(psd.name);
-                                                                    }
+                                                                    newNum=nextLine.substring(start, end+endIndex);
+                                                                    numsInLine.add(newNum);
+                                                                    start=end;
                                                                 }
                                                             }
-                                                            else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
+                                                            if(numsInLine.contains(psd.name.replace(".psd",""))){
                                                                 if(!newUser.cards.contains(psd)){
                                                                     newUser.cards.add(psd);
                                                                     newUser.model.addElement(psd.name);
                                                                 }
                                                             }
                                                         }
+                                                        else if(nextLine.toLowerCase().contains(psd.name.toLowerCase().replace(".psd",""))){
+                                                            if(!newUser.cards.contains(psd)){
+                                                                newUser.cards.add(psd);
+                                                                newUser.model.addElement(psd.name);
+                                                            }
+                                                        }
+                                                        else{
+                                                            String cardLine = nextLine.substring(nextLine.toLowerCase().indexOf(cardMaker.toLowerCase())+cardMaker.length());
+                                                            if(psd.altName.length()>0){
+                                                                if(isNumber(psd.altName)){
+                                                                    ArrayList<String> numsInLine = new ArrayList<String>();
+                                                                    for(int start=0; start<nextLine.length(); start++){
+                                                                        if(Character.isDigit(nextLine.charAt(start))&&(start<1||!Character.isLetter(nextLine.charAt(start-1)))){
+                                                                            String newNum="";
+                                                                            int end=start+1;
+                                                                            int endIndex=0;
+                                                                            while(end+endIndex<nextLine.length()&&Character.isDigit(nextLine.charAt(end+endIndex))){
+                                                                                endIndex++;
+                                                                            }
+                                                                            newNum=nextLine.substring(start, end+endIndex);
+                                                                            numsInLine.add(newNum);
+                                                                            start=end;
+                                                                        }
+                                                                    }
+                                                                    if(numsInLine.contains(psd.altName)){
+                                                                        if(!newUser.cards.contains(psd)){
+                                                                            newUser.cards.add(psd);
+                                                                            newUser.model.addElement(psd.name);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                else if(cardLine.toLowerCase().contains(psd.altName.toLowerCase().replace(".psd",""))){
+                                                                    if(!newUser.cards.contains(psd)){
+                                                                        newUser.cards.add(psd);
+                                                                        newUser.model.addElement(psd.name);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            if(cardMaker!=null&&cardMaker.length()>0){
                                                 ArrayList<String> basePSDs = new ArrayList<String>();
                                                 for(PsdButton psd : psds){
                                                     int index=1;
@@ -329,16 +329,24 @@ public class Main
                                         }
                                     }
                                 }
+                                dialog.dispose();
                             }
-                            frame.validate();
-                            frame.repaint();
+                            else{
+                                JOptionPane.showMessageDialog(frame,"Please input a valid card line name","Card Line Name Error",JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    });
+                    cancel.addActionListener(new ActionListener(){
+                        public void actionPerformed(ActionEvent a){
                             dialog.dispose();
                         }
                     });
-                    JScrollPane scrollPane = new JScrollPane(contents);
-                    //scrollPane.setPreferredSize(new Dimension((int)(frame.getWidth()*.5),(int)(frame.getHeight()*.5)));
+                    dialog.add(BorderLayout.NORTH,cln);
                     dialog.add(BorderLayout.CENTER,scrollPane);
-                    dialog.add(BorderLayout.SOUTH,done);
+                    JPanel btnPanel = new JPanel(new FlowLayout());
+                    btnPanel.add(done);
+                    btnPanel.add(cancel);
+                    dialog.add(BorderLayout.SOUTH,btnPanel);
                     dialog.pack();
                     dialog.setLocationRelativeTo(frame);
                     dialog.setVisible(true);
@@ -868,8 +876,8 @@ public class Main
         //userPanel.add(BorderLayout.NORTH,searchPanel);
         JScrollPane scroller = new JScrollPane(listedUsersPanel);
         //userPanel.add(BorderLayout.CENTER,scroller);
-        lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.8));
-        scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.8));
+        lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.85));
+        scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.85));
         searchPanel.setBounds(0,0,frame.getWidth(),100);
         lPane.add(searchPanel,1,0);
         lPane.add(scroller,0,0);
@@ -919,8 +927,8 @@ public class Main
 
         frame.addComponentListener(new ComponentAdapter(){
             public void componentResized(ComponentEvent c){
-                lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.8));
-                scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.8));
+                lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.85));
+                scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.85));
                 searchPanel.setBounds(0,0,frame.getWidth(),(int)(searchPanel.getBounds().getHeight()));
             }
         });
