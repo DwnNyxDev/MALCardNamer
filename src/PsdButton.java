@@ -11,6 +11,9 @@ public class PsdButton extends JButton{
     String[] textLayers;
     boolean selected;
     String replaceString;
+    String replaceLayer;
+    boolean repString;
+    boolean repLayer;
 
     public PsdButton(File fileIn){
         super(fileIn.getName());
@@ -21,6 +24,9 @@ public class PsdButton extends JButton{
         nameLayer="";
         selected=false;
         replaceString="Name";
+        replaceLayer="Name";
+        repString=true;
+        repLayer=false;
     }
 
     

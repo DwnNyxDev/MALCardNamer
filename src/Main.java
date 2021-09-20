@@ -58,9 +58,6 @@ public class Main
     private static ArrayList<String> savedUsers = new ArrayList<String>();
     private static ArrayList<CardUser> addedUsers = new ArrayList<CardUser>();
     private static File lastOpenLocation;
-    private static boolean useGlobalSettings;
-    private static int globalCLimit;
-    private static String globalReplaceString;
     private static boolean ctrlHeld;
     private static boolean shiftHeld;
     private static int lastSelectedIndex = 0;
@@ -80,9 +77,6 @@ public class Main
         psdSettingsPanel = new JPanel(new FlowLayout());
         userPanel = new JPanel(new FlowLayout());
         listedUsersPanel = new JPanel(new GridLayout(4,0));
-
-        globalCLimit = 20;
-        globalReplaceString = "Name";
 
         ctrlHeld = false;
         shiftHeld=false;
@@ -509,12 +503,7 @@ public class Main
                                     for(int p=0; p<psds.size(); p++){
                                         PsdButton psd = psds.get(p);
                                         String psdInput;
-                                        if(!useGlobalSettings){
-                                            psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'replace':'"+psd.replaceString+"'";
-                                        }
-                                        else{
-                                            psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+globalCLimit+",'replace':'"+globalReplaceString+"'";
-                                        }
+                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'repString':"+psd.repString+",'replaceWord':'"+psd.replaceString+"','repLayer':"+psd.repLayer+",'replaceLayer':'"+psd.replaceLayer+"'";
                                         psdInput+="},\n";
                                         data.add(psdInput);
                                     }
@@ -580,85 +569,11 @@ public class Main
         m1.add(m11);
         m1.add(m12);
         m1.add(m13);
-        JMenu m2 = new JMenu("Global");
-        JCheckBox useGlobal = new JCheckBox("Use Global Settings?");
-        TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
-        textBorder.setTitleJustification(TitledBorder.CENTER);
-        JTextField cLimitText = new JTextField(9);
-        cLimitText.setEditable(false);
-        cLimitText.setBackground(psdSettingsPanel.getBackground());
-        cLimitText.setHorizontalAlignment(JTextField.CENTER);
-        cLimitText.setBorder(textBorder);
-        cLimitText.setText(String.valueOf(globalCLimit));
-        cLimitText.addFocusListener(new FocusListener(){
-            public void focusGained(FocusEvent f){
-                if(cLimitText.isEditable()){
-                    cLimitText.setText("");
-                }
-            }
-            public void focusLost(FocusEvent f){
-                if(cLimitText.isEditable()){
-                    try{
-                        int cLimit = Integer.valueOf(cLimitText.getText());
-                        globalCLimit= cLimit;
-                    } catch(NumberFormatException e){
-                        cLimitText.setText(String.valueOf(globalCLimit));
-                    }
-                }
-            }
-        });
-
-        textBorder = BorderFactory.createTitledBorder("replace");
-        textBorder.setTitleJustification(TitledBorder.CENTER);
-        JTextField replaceText = new JTextField(9);
-        replaceText.setEditable(false);
-        replaceText.setBackground(psdSettingsPanel.getBackground());
-        replaceText.setHorizontalAlignment(JTextField.CENTER);
-        replaceText.setBorder(textBorder);
-        replaceText.setText(globalReplaceString);
-        replaceText.addFocusListener(new FocusListener(){
-            public void focusGained(FocusEvent f){
-                if(replaceText.isEditable()){
-                    replaceText.setText("");
-                }
-            }
-            public void focusLost(FocusEvent f){
-                if(replaceText.isEditable()){
-                    if(replaceText.getText().length()==0){
-                        replaceText.setText(globalReplaceString);
-                    }
-                    else{
-                        globalReplaceString=replaceText.getText();
-                    }
-                }
-            }
-        });
-        useGlobal.addItemListener(new ItemListener(){
-            public void itemStateChanged(ItemEvent i){
-                if(i.getStateChange()==ItemEvent.SELECTED){
-                    useGlobalSettings=true;
-                    cLimitText.setEditable(true);
-                    replaceText.setEditable(true);
-                    frame.validate();
-                    frame.repaint();
-                }
-                else{
-                    useGlobalSettings=false;
-                    cLimitText.setEditable(false);
-                    replaceText.setEditable(false);
-                    frame.validate();
-                    frame.repaint();
-                }
-            }
-        });
-        m2.add(useGlobal);
-        m2.add(cLimitText);
-        m2.add(replaceText);
+        
         JMenu m3 = new JMenu("Help");
         JMenuItem m31 = new JMenuItem("Tutorial");
         m3.add(m31);
         mb.add(m1);
-        mb.add(m2);
         mb.add(m3);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
@@ -1222,8 +1137,9 @@ public class Main
                                                     tempBtn.altName=altNameText.getText();
                                                 }
                                             });
+                                            
 
-                                            textBorder = BorderFactory.createTitledBorder("replace");
+                                            textBorder = BorderFactory.createTitledBorder("Replace Text");
                                             textBorder.setTitleJustification(TitledBorder.CENTER);
                                             JTextField replaceText = new JTextField(9);
                                             replaceText.setBackground(psdSettingsPanel.getBackground());
@@ -1267,6 +1183,122 @@ public class Main
                                                 }
                                             });
 
+                                            textBorder = BorderFactory.createTitledBorder("Replace Layer");
+                                            textBorder.setTitleJustification(TitledBorder.CENTER);
+                                            JTextField replaceLayer = new JTextField(9);
+                                            replaceLayer.setBackground(psdSettingsPanel.getBackground());
+                                            replaceLayer.setHorizontalAlignment(JTextField.CENTER);
+                                            replaceLayer.setBorder(textBorder);
+                                            boolean sameReplaceLayer = true;
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected&&!psd.replaceLayer.equals(tempBtn.replaceLayer)){
+                                                    sameReplaceLayer=false;
+                                                }
+                                            }
+                                            if(sameReplaceLayer){
+                                                replaceLayer.setText(tempBtn.replaceLayer);
+                                            }
+                                            replaceLayer.addFocusListener(new FocusListener(){
+                                                public void focusGained(FocusEvent f){
+                                                    replaceLayer.setText("");
+                                                }
+                                                public void focusLost(FocusEvent f){
+                                                    if(replaceLayer.getText().length()==0){
+                                                        boolean sameReplaceLayer = true;
+                                                        for(PsdButton psd : psds){
+                                                            if(psd.selected&&!psd.replaceLayer.equals(tempBtn.replaceLayer)){
+                                                                sameReplaceLayer=false;
+                                                            }
+                                                        }
+                                                        if(sameReplaceLayer){
+                                                            replaceLayer.setText(tempBtn.replaceLayer);
+                                                        }
+                                                        else{
+                                                            replaceLayer.setText("");
+                                                        }
+                                                    }
+                                                    else{
+                                                        for(PsdButton psd : psds){
+                                                            if(psd.selected){
+                                                                psd.replaceLayer=replaceLayer.getText();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            });
+
+                                            JRadioButton repStringBtn = new JRadioButton("Text",true);
+                                            repStringBtn.addActionListener(new ActionListener(){
+                                                public void actionPerformed(ActionEvent a) {
+                                                    if(repStringBtn.isSelected()){
+                                                        replaceText.setEnabled(true);
+                                                        for(PsdButton psd: psds){
+                                                            if(psd.selected){
+                                                                psd.repString=true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else{
+                                                        replaceText.setEnabled(false);
+                                                        for(PsdButton psd: psds){
+                                                            if(psd.selected){
+                                                                psd.repString=false;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                            JRadioButton repLayerBtn = new JRadioButton("Layer",false);
+                                            repLayerBtn.addActionListener(new ActionListener(){
+                                                public void actionPerformed(ActionEvent a) {
+                                                    if(repLayerBtn.isSelected()){
+                                                        replaceLayer.setEnabled(true);
+                                                        for(PsdButton psd: psds){
+                                                            if(psd.selected){
+                                                                psd.repLayer=true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else{
+                                                        replaceLayer.setEnabled(false);
+                                                        for(PsdButton psd: psds){
+                                                            if(psd.selected){
+                                                                psd.repLayer=false;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                            boolean sameLayerSetting = true;
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected&&psd.repLayer!=tempBtn.repLayer){
+                                                    sameLayerSetting=false;
+                                                }
+                                            }
+                                            if(!sameLayerSetting){
+                                                replaceLayer.setEnabled(false);
+                                                repLayerBtn.setSelected(false);
+                                            }
+                                            else{
+                                                repLayerBtn.setSelected(tempBtn.repLayer);
+                                                replaceLayer.setEnabled(tempBtn.repLayer);
+                                            }
+
+                                            boolean sameTextSetting = true;
+                                            for(PsdButton psd : psds){
+                                                if(psd.selected&&psd.repString!=tempBtn.repString){
+                                                    sameTextSetting=false;
+                                                }
+                                            }
+                                            if(!sameTextSetting){
+                                                replaceText.setEnabled(false);
+                                                repStringBtn.setSelected(false);
+                                            }
+                                            else{
+                                                repStringBtn.setSelected(tempBtn.repString);
+                                                replaceText.setEnabled(tempBtn.repString);
+                                            }
+
                                             psdSettingsPanel.add(psdLabel);
                                             psdSettingsPanel.add(cLimitText);
                                             int numSelected=0;
@@ -1278,7 +1310,18 @@ public class Main
                                             if(numSelected<2){
                                                 psdSettingsPanel.add(altNameText);
                                             }
+                                            JPanel replacePanel = new JPanel(new GridLayout(2,1));
+                                            replacePanel.setBackground(psdSettingsPanel.getBackground());
+                                            TitledBorder replaceBorder = BorderFactory.createTitledBorder("Replace:");
+                                            replaceBorder.setTitleJustification(TitledBorder.CENTER);
+                                            replacePanel.setBorder(replaceBorder);
+                                            repStringBtn.setBackground(psdSettingsPanel.getBackground());
+                                            repLayerBtn.setBackground(psdSettingsPanel.getBackground());
+                                            replacePanel.add(repStringBtn);
+                                            replacePanel.add(repLayerBtn);
+                                            psdSettingsPanel.add(replacePanel);
                                             psdSettingsPanel.add(replaceText);
+                                            psdSettingsPanel.add(replaceLayer);
                                             psdSettingsPanel.setVisible(true);
                                         }
                                         frame.validate();
@@ -1369,7 +1412,6 @@ public class Main
                     start=true;
                     startStep=1;
                     m12.setEnabled(false);
-                    m2.setEnabled(false);
                     m3.setEnabled(false);
                     search.setEnabled(false);
                     psds.clear();
@@ -1405,7 +1447,6 @@ public class Main
                             m11.setEnabled(true);
                             m12.setEnabled(true);
                             m13.setEnabled(true);
-                            m2.setEnabled(true);
                             m3.setEnabled(true);
                             search.setEnabled(true);
                             m1.setEnabled(true);
@@ -1420,7 +1461,6 @@ public class Main
                             m11.setEnabled(true);
                             m12.setEnabled(true);
                             m13.setEnabled(true);
-                            m2.setEnabled(true);
                             m3.setEnabled(true);
                             search.setEnabled(true);
                             m1.setEnabled(true);

@@ -13,11 +13,17 @@ for(var user in users){
         for(var u=0; u<users[user].cards.length; u++){
             var card = users[user].cards[u];
             var cLimit=20;
-            var replaceString="Name";
+            var repString=true;
+            var replaceWord="Name";
+            var repLayer=false;
+            var replaceLayer="Name";
             for(var psdFind in psds){
                 if(psds[psdFind].name==card){
                     cLimit=psds[psdFind].limit;
-                    replaceString=psds[psdFind].replace;
+                    repString = psds[psdFind].repString;
+                    replaceWord = psds[psdFind].replaceWord;
+                    repLayer = psds[psdFind].repLayer;
+                    replaceLayer = psds[psdFind].replaceLayer;
                     break;
                 }
             }
@@ -37,7 +43,19 @@ for(var user in users){
                             renameLayers(layer);
                         }
                         if(layer.kind == LayerKind.TEXT){
-                            layer.textItem.contents=layer.textItem.contents.replace(replaceString,user_name);
+                            if(repLayer){
+                                if(layer.name==replaceLayer){
+                                    if(repString){
+                                        layer.textItem.contents=layer.textItem.contents.replace(replaceWord,user_name);
+                                    }
+                                    else{
+                                        layer.textItem.contents=user_name;
+                                    } 
+                                }
+                            }
+                            else if(repString){
+                                layer.textItem.contents=layer.textItem.contents.replace(replaceWord,user_name);
+                            } 
                         }
                     }
                 }
