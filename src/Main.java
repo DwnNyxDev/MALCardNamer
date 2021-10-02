@@ -40,7 +40,7 @@ import javax.swing.event.ListSelectionEvent;
  * Write a description of class main here.
  *
  * @author Vandell Vatel
- * @version v1.0.0
+ * @version v1.3.0
  */
 public class Main
 {
@@ -54,6 +54,7 @@ public class Main
     private static JPanel buttonPanel;
     private static JPanel psdSettingsPanel;
     private static JPanel userPanel;
+    private static JScrollPane scroller;
     private static JPanel listedUsersPanel;
     private static ArrayList<String> savedUsers = new ArrayList<String>();
     private static ArrayList<CardUser> addedUsers = new ArrayList<CardUser>();
@@ -77,6 +78,7 @@ public class Main
         psdSettingsPanel = new JPanel(new FlowLayout());
         userPanel = new JPanel(new FlowLayout());
         listedUsersPanel = new JPanel(new GridLayout(4,0));
+        
 
         ctrlHeld = false;
         shiftHeld=false;
@@ -87,7 +89,7 @@ public class Main
         frame.setIconImage(new ImageIcon("MAL_Logo.png").getImage());
         frame.setSize((int)(screenWidth*.75),(int)(screenHeight*.75));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
+        //frame.setResizable(false);
 
         JLabel psdOpenLabel = new JLabel(new ImageIcon(new ImageIcon("OpenPsds.png").getImage().getScaledInstance((int)(frame.getWidth()*.25), -1, Image.SCALE_SMOOTH)));
         JLayeredPane framePane = new JLayeredPane();
@@ -127,44 +129,46 @@ public class Main
                     cln.getDocument().addDocumentListener(new DocumentListener(){
                         @Override
                         public void insertUpdate(DocumentEvent e) {
-                            if(cln.getText().equals("DawnofNyx")){
-                                startStep=4;
-                                stepLabel.setText("Step 4: Topic Page Contents");
-                                detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
-                                done.setEnabled(true);
-                                contents.setEnabled(true);
-                            }
-                            else{
-                                startStep=3;
-                                stepLabel.setText("Step 3: Card Line Name");
-                                detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
-                                done.setEnabled(false);
-                                contents.setEnabled(false);
+                            if(start){
+                                if(cln.getText().equals("DawnofNyx")){
+                                    startStep=4;
+                                    stepLabel.setText("Step 4: Topic Page Contents");
+                                    detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
+                                    done.setEnabled(true);
+                                    contents.setEnabled(true);
+                                }
+                                else{
+                                    startStep=3;
+                                    stepLabel.setText("Step 3: Card Line Name");
+                                    detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
+                                    done.setEnabled(false);
+                                    contents.setEnabled(false);
+                                }
                             }
                         }
 
                         @Override
                         public void removeUpdate(DocumentEvent e) {
-                            if(cln.getText().equals("DawnofNyx")){
-                                startStep=4;
-                                stepLabel.setText("Step 4: Topic Page Contents");
-                                detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
-                                done.setEnabled(true);
-                                contents.setEnabled(true);
-                            }
-                            else{
-                                startStep=3;
-                                stepLabel.setText("Step 3: Card Line Name");
-                                detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
-                                done.setEnabled(false);
-                                contents.setEnabled(false);
+                            if(start){
+                                if(cln.getText().equals("DawnofNyx")){
+                                    startStep=4;
+                                    stepLabel.setText("Step 4: Topic Page Contents");
+                                    detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
+                                    done.setEnabled(true);
+                                    contents.setEnabled(true);
+                                }
+                                else{
+                                    startStep=3;
+                                    stepLabel.setText("Step 3: Card Line Name");
+                                    detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
+                                    done.setEnabled(false);
+                                    contents.setEnabled(false);
+                                }
                             }
                         }
 
                         @Override
-                        public void changedUpdate(DocumentEvent e) {
-                            // TODO Auto-generated method stub
-                            
+                        public void changedUpdate(DocumentEvent e) { 
                         }
                     });
 
@@ -388,7 +392,7 @@ public class Main
                                         if(start){
                                             tutFrame.dispose();
                                         }
-                                        JOptionPane.showMessageDialog(frame, "Something went wrong with reading yoru requests.", "No Requests Found", JOptionPane.ERROR_MESSAGE);
+                                        JOptionPane.showMessageDialog(frame, "Something went wrong with reading your requests.", "No Requests Found", JOptionPane.ERROR_MESSAGE);
                                     }
                                 }
                                 else{
@@ -863,35 +867,27 @@ public class Main
         });
         JScrollPane nameScroller = new JScrollPane(searchList);
         searchPanel.add(nameScroller);
-        userPanel.setLayout(new BorderLayout());
         JLayeredPane lPane = new JLayeredPane();
-        //userPanel.add(BorderLayout.NORTH,searchPanel);
-        JScrollPane scroller = new JScrollPane(listedUsersPanel);
-        //userPanel.add(BorderLayout.CENTER,scroller);
-        lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.85));
-        scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.85));
+        listedUsersPanel.setBounds(0,18,(int)(frame.getWidth()-18),(int)(frame.getHeight()*.8));
+        listedUsersPanel.setPreferredSize(new Dimension((int)(frame.getWidth()-18),(int)(frame.getHeight()*.8)));
         searchPanel.setBounds(0,0,frame.getWidth(),100);
         lPane.add(searchPanel,1,0);
-        lPane.add(scroller,0,0);
+        lPane.add(listedUsersPanel,0,0);
+        userPanel.setLayout(new BorderLayout());
         userPanel.add(BorderLayout.CENTER,lPane);
         
         search.addFocusListener(new FocusAdapter(){
             public void focusGained(FocusEvent f){
                 lPane.setLayer(searchPanel, 1);
-                lPane.setLayer(scroller, 0);
+                lPane.setLayer(listedUsersPanel, 0);
             }
             public void focusLost(FocusEvent f){
                 lPane.setLayer(searchPanel, 0);
-                lPane.setLayer(scroller, 1);
+                lPane.setLayer(listedUsersPanel, 1);
             }
         });
         
         contentPanel.add(BorderLayout.NORTH,psdPanel);
-        scroller.addMouseListener(new MouseAdapter(){
-            public void mousePressed(MouseEvent m){
-                frame.requestFocusInWindow();
-            }
-        });
         contentPanel.add(userPanel);
 
         frame.add(BorderLayout.NORTH,mb);
@@ -919,9 +915,9 @@ public class Main
 
         frame.addComponentListener(new ComponentAdapter(){
             public void componentResized(ComponentEvent c){
-                lPane.setBounds(0,0,frame.getWidth(),(int)(frame.getHeight()*.85));
-                scroller.setBounds(0,18,frame.getWidth(),(int)(frame.getHeight()*.85));
-                searchPanel.setBounds(0,0,frame.getWidth(),(int)(searchPanel.getBounds().getHeight()));
+                listedUsersPanel.setBounds(0,18,(int)(frame.getWidth()-15),(int)(frame.getHeight()*.8));
+                listedUsersPanel.setPreferredSize(new Dimension((int)(frame.getWidth()-15),(int)(frame.getHeight()*.8)));
+                searchPanel.setBounds(0,0,frame.getWidth(),100);
             }
         });
 
@@ -1361,6 +1357,10 @@ public class Main
                                     ((GridLayout)buttonPanel.getLayout()).setColumns(10);
                                 }
                             }
+                        }
+                        for(PsdButton psd: psds){
+                            psd.selected=false;
+                            psd.setBackground(null);
                         }
                         psdPanel.removeAll();
                         psdSettingsPanel.setVisible(false);
