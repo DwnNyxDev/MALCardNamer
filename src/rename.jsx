@@ -42,7 +42,7 @@ for(var user in users){
                         if(layer.layers!=null){
                             renameLayers(layer);
                         }
-                        if(layer.kind == LayerKind.TEXT){
+                        if(layer.kind == LayerKind.TEXT && !layer.allLocked){
                             if(repLayer){
                                 if(layer.name==replaceLayer){
                                     if(repString){
