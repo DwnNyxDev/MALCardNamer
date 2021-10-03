@@ -6,18 +6,15 @@ import javax.swing.event.ListSelectionListener;
 import java.io.*;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import javax.swing.text.DefaultStyledDocument.ElementSpec;
 
 import java.util.Scanner;
 import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -68,6 +65,8 @@ public class Main
     private static JLabel stepLabel;
     private static JTextPane detailPane;
     private static boolean manualTut;
+
+    private static ArrayList<CardEdition> editions = new ArrayList<CardEdition>();
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
