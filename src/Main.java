@@ -6,6 +6,7 @@ import javax.swing.event.ListSelectionListener;
 import java.io.*;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.JTableHeader;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -24,11 +25,11 @@ import java.util.Arrays;
 import java.awt.GridLayout;
 import java.util.Collections;
 import java.util.List;
-
-import javax.swing.SwingUtilities;
 import java.awt.Image;
 
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 
@@ -47,40 +48,25 @@ public class Main
     private static boolean found_photoshop;
     private static File scriptsFolder;
     private static File saveData;
-    private static JPanel psdPanel;
-    private static JPanel buttonPanel;
-    private static JPanel psdSettingsPanel;
-    private static JPanel userPanel;
-    private static JScrollPane scroller;
-    private static JPanel listedUsersPanel;
-    private static ArrayList<String> savedUsers = new ArrayList<String>();
-    private static ArrayList<CardUser> addedUsers = new ArrayList<CardUser>();
     private static File lastOpenLocation;
-    private static boolean ctrlHeld;
-    private static boolean shiftHeld;
-    private static int lastSelectedIndex = 0;
-    private static boolean start;
-    private static int startStep;
-    private static JFrame tutFrame;
-    private static JLabel stepLabel;
-    private static JTextPane detailPane;
-    private static boolean manualTut;
+    protected static boolean start;
+    protected static int startStep;
+    protected static JFrame tutFrame;
+    protected static JLabel stepLabel;
+    protected static JTextPane detailPane;
+    protected static boolean manualTut;
+    private static JTabbedPane tPane;
+    private static CardEdition selectedGroup;
 
     private static ArrayList<CardEdition> editions = new ArrayList<CardEdition>();
+    private static int groupNum=1;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         double screenHeight = screenSize.getHeight();
         double screenWidth = screenSize.getWidth();
         found_photoshop=false;
-        buttonPanel = new JPanel(new GridLayout(0,10));
-        psdSettingsPanel = new JPanel(new FlowLayout());
-        userPanel = new JPanel(new FlowLayout());
-        listedUsersPanel = new JPanel(new GridLayout(4,0));
-        
 
-        ctrlHeld = false;
-        shiftHeld=false;
         start = false;
         startStep=1;
         
@@ -89,6 +75,17 @@ public class Main
         frame.setSize((int)(screenWidth*.75),(int)(screenHeight*.75));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //frame.setResizable(false);
+
+        tPane = new JTabbedPane();
+        tPane.addChangeListener(new ChangeListener(){
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if(tPane.getSelectedIndex()!=-1){
+                    selectedGroup=editions.get(tPane.getSelectedIndex());
+                }
+            }
+        });
+        frame.add(tPane);
 
         JLabel psdOpenLabel = new JLabel(new ImageIcon(new ImageIcon("OpenPsds.png").getImage().getScaledInstance((int)(frame.getWidth()*.25), -1, Image.SCALE_SMOOTH)));
         JLayeredPane framePane = new JLayeredPane();
@@ -99,9 +96,10 @@ public class Main
         JMenu m1 = new JMenu("File");
         JMenuItem m11= new JMenuItem("Open PSDs");
         JMenuItem m12= new JMenuItem("Read Webpage");
+        
         m12.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if(psds.size()>0){
+                if(selectedGroup.getPsds().size()>0){
                     final JDialog dialog = new JDialog(frame,"Topic Contents",true);
                     JTextField cln = new JTextField("Cards",15);
                     cln.setHorizontalAlignment(JTextField.CENTER);
@@ -117,9 +115,9 @@ public class Main
                     JButton done = new JButton("Done");
                     JButton cancel = new JButton("Cancel");
 
-                    if(start&&startStep==2&&!manualTut){
-                        startStep=3;
-                        stepLabel.setText("Step 3: Card Line Name");
+                    if(start&&startStep==3&&!manualTut){
+                        startStep=4;
+                        stepLabel.setText("Step 4: Card Line Name");
                         detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
                         done.setEnabled(false);
                         contents.setEnabled(false);
@@ -130,15 +128,15 @@ public class Main
                         public void insertUpdate(DocumentEvent e) {
                             if(start){
                                 if(cln.getText().equals("DawnofNyx")){
-                                    startStep=4;
-                                    stepLabel.setText("Step 4: Topic Page Contents");
+                                    startStep=5;
+                                    stepLabel.setText("Step 5: Topic Page Contents");
                                     detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
                                     done.setEnabled(true);
                                     contents.setEnabled(true);
                                 }
                                 else{
-                                    startStep=3;
-                                    stepLabel.setText("Step 3: Card Line Name");
+                                    startStep=4;
+                                    stepLabel.setText("Step 4: Card Line Name");
                                     detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
                                     done.setEnabled(false);
                                     contents.setEnabled(false);
@@ -150,15 +148,15 @@ public class Main
                         public void removeUpdate(DocumentEvent e) {
                             if(start){
                                 if(cln.getText().equals("DawnofNyx")){
-                                    startStep=4;
-                                    stepLabel.setText("Step 4: Topic Page Contents");
+                                    startStep=5;
+                                    stepLabel.setText("Step 5: Topic Page Contents");
                                     detailPane.setText("Finally, copy your request form from the topic page\nMake sure you copy your form entirely.\nPaste your form into the Topic Page Contents Text Area\nWhen you're ready, just press the done button.");
                                     done.setEnabled(true);
                                     contents.setEnabled(true);
                                 }
                                 else{
-                                    startStep=3;
-                                    stepLabel.setText("Step 3: Card Line Name");
+                                    startStep=4;
+                                    stepLabel.setText("Step 4: Card Line Name");
                                     detailPane.setText("The first thing you should do is fill out the name of the card line.\nThis is the line that a card requester would write what cards they want on.\nI.e. DawnofNyx:1,2,3 -> DawnofNyx | Cards:3,5,7 -> Cards\nPlease type DawnofNyx into the text field.");
                                     done.setEnabled(false);
                                     contents.setEnabled(false);
@@ -238,7 +236,7 @@ public class Main
                                                     if(secondName!=null){
                                                         secondName=secondName.trim();
                                                     }
-                                                    newUser=createUser(firstName, secondName);
+                                                    newUser=selectedGroup.createUser(firstName, secondName);
                                                     searchForNames=false;
                                                     searchForCards=true;
                                                 }
@@ -247,7 +245,7 @@ public class Main
                                         else if(searchForCards){
                                             if(newUser!=null){
                                                 if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())&&nextLine.toLowerCase().contains("all")){
-                                                    for(PsdButton psd: psds){
+                                                    for(PsdButton psd: selectedGroup.getPsds()){
                                                         if(!newUser.cards.contains(psd)){
                                                             newUser.cards.add(psd);
                                                             newUser.model.addElement(psd.name);
@@ -255,7 +253,7 @@ public class Main
                                                     }
                                                 }
                                                 else{
-                                                    for(PsdButton psd : psds){
+                                                    for(PsdButton psd : selectedGroup.getPsds()){
                                                         if(nextLine.toLowerCase().contains(cardMaker.toLowerCase())){
                                                             if(isNumber(psd.name.replace(".psd",""))){
                                                                 ArrayList<String> numsInLine = new ArrayList<String>();
@@ -321,7 +319,7 @@ public class Main
                                                         }
                                                     }
                                                     ArrayList<String> basePSDs = new ArrayList<String>();
-                                                    for(PsdButton psd : psds){
+                                                    for(PsdButton psd : selectedGroup.getPsds()){
                                                         int index=1;
                                                         String endNumber="";
                                                         String psdName = psd.name.replace(".psd","");
@@ -361,7 +359,7 @@ public class Main
                                                                 }
                                                                 for(String num : nums){
                                                                     String newName = base+num;
-                                                                    for(PsdButton psd: psds){
+                                                                    for(PsdButton psd: selectedGroup.getPsds()){
                                                                         String psdName = psd.name.replace(".psd","");
                                                                         if(psdName.equals(newName)){
                                                                             if(!newUser.cards.contains(psd)){
@@ -380,11 +378,12 @@ public class Main
                                         }
                                     }
                                     dialog.dispose();
-                                    if(addedUsers.size()>0&&addedUsers.get(0).cards.size()>0){
-                                        if(start&&startStep==4){
-                                            startStep=5;
-                                            stepLabel.setText("Step 5: Save Script");
-                                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                                    if(selectedGroup.getAddedUsers().size()>0&&selectedGroup.getAddedUsers().get(0).cards.size()>0){
+                                        if(start&&startStep==5){
+                                            m12.setEnabled(false);
+                                            startStep=6;
+                                            stepLabel.setText("Step 6: Save Script");
+                                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them on your desktop.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
                                         }
                                     }
                                     else{
@@ -393,6 +392,7 @@ public class Main
                                         }
                                         JOptionPane.showMessageDialog(frame, "Something went wrong with reading your requests.", "No Requests Found", JOptionPane.ERROR_MESSAGE);
                                     }
+                                    
                                 }
                                 else{
                                     JOptionPane.showMessageDialog(frame,"Please input a valid card line name","Card Line Name Error",JOptionPane.ERROR_MESSAGE);
@@ -425,30 +425,52 @@ public class Main
                 }
             }
         });
+        
         JMenuItem m13 = new JMenuItem("Save Script");
+        
         m13.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if((start&&startStep==5)||!start){
-                    if(addedUsers.size()>0){
-                        boolean atleastOne=false;
-                        for(CardUser u: addedUsers){
-                            if(u.model.size()>0){
-                                atleastOne=true;
-                                break;
+                if((start&&startStep==6)||!start){
+                    boolean atLeastOne=false;
+                    for(CardEdition group: editions){
+                        if(group.getAddedUsers().size()>0){
+                            for(CardUser u: group.getAddedUsers()){
+                                if(u.model.size()>0){
+                                    atLeastOne=true;
+                                    break;
+                                }
                             }
                         }
-                        if(atleastOne){
-                            boolean error=false;
-                            JFileChooser tempSaver = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
-                            tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                            if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
-                                File saveLocation = tempSaver.getSelectedFile();
-                                InputStream in = getClass().getResourceAsStream("rename.jsx");
-                                File renameFile = new File(scriptsFolder.getAbsolutePath()+"\\RenameMalCards.jsx");
-                                ArrayList<String> renameContents = new ArrayList<String>();
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                                boolean addToArray=true;
-                                String newLine = null;
+                    }
+                    if(atLeastOne){
+                        boolean error=false;
+                        JFileChooser tempSaver = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
+                        tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                        if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
+                            File saveLocation = tempSaver.getSelectedFile();
+                            InputStream in = getClass().getResourceAsStream("rename.jsx");
+                            File renameFile = new File(scriptsFolder.getAbsolutePath()+"\\RenameMalCards.jsx");
+                            ArrayList<String> renameContents = new ArrayList<String>();
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                            boolean addToArray=true;
+                            String newLine = null;
+                            try{
+                                newLine = reader.readLine();
+                            }
+                            catch(IOException e){
+                                error=true;
+                                JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
+                            }
+                            while(newLine!=null&&!error){
+                                if(addToArray || newLine.equals("//start of code")){
+                                    renameContents.add(newLine+"\n");
+                                    if(newLine.equals("//start of data")){
+                                        addToArray=false;
+                                    }
+                                    else if(newLine.equals("//start of code")){
+                                        addToArray=true;
+                                    }
+                                }
                                 try{
                                     newLine = reader.readLine();
                                 }
@@ -456,36 +478,22 @@ public class Main
                                     error=true;
                                     JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
                                 }
-                                while(newLine!=null&&!error){
-                                    if(addToArray || newLine.equals("//start of code")){
-                                        renameContents.add(newLine+"\n");
-                                        if(newLine.equals("//start of data")){
-                                            addToArray=false;
-                                        }
-                                        else if(newLine.equals("//start of code")){
-                                            addToArray=true;
-                                        }
-                                    }
-                                    try{
-                                        newLine = reader.readLine();
-                                    }
-                                    catch(IOException e){
-                                        error=true;
-                                        JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
-                                    }
-                                }
-                                try {
-                                    reader.close();
-                                } catch (IOException e) {
-                                    error=true;
-                                    JOptionPane.showMessageDialog(frame, e, "FileReaderCloseError", JOptionPane.ERROR_MESSAGE);
-                                }
-                                if(!error){
-                                    ArrayList<String> data = new ArrayList<String>();
-                                    data.add("var users = {\n");
-                                    for(int i=0; i<addedUsers.size(); i++){
-                                        CardUser tempUser = addedUsers.get(i);
-                                        String cardInput = "    '"+i+"' : {'names':['"+tempUser.names[0]+"'";
+                            }
+                            try {
+                                reader.close();
+                            } catch (IOException e) {
+                                error=true;
+                                JOptionPane.showMessageDialog(frame, e, "FileReaderCloseError", JOptionPane.ERROR_MESSAGE);
+                            }
+                            if(!error){
+                                ArrayList<String> data = new ArrayList<String>();
+                                data.add("var groups = {\n");
+                                for(int g=0; g<editions.size(); g++){
+                                    CardEdition tempED = editions.get(g);
+                                    data.add("'"+g+"' : {'users':\n         {\n");
+                                    for(int i=0; i<tempED.getAddedUsers().size(); i++){
+                                        CardUser tempUser = tempED.getAddedUsers().get(i);
+                                        String cardInput = "            '"+i+"' : {'names':['"+tempUser.names[0]+"'";
                                         if(tempUser.names.length>1){
                                             cardInput+=",'"+tempUser.names[1]+"'";
                                         }
@@ -501,66 +509,63 @@ public class Main
                                         cardInput+="]},\n";
                                         data.add(cardInput);
                                     }
-                                    data.add("};\n\n");
-                                    data.add("var psds = {\n");
-                                    for(int p=0; p<psds.size(); p++){
-                                        PsdButton psd = psds.get(p);
+                                    data.add("      }\n      ,'psds':\n       {\n");
+                                    for(int p=0; p<tempED.getPsds().size(); p++){
+                                        PsdButton psd = tempED.getPsds().get(p);
                                         String psdInput;
-                                        psdInput = "    '"+p+"' : {'name':'"+psd.name+"','limit':"+psd.charLimit+",'repString':"+psd.repString+",'replaceWord':'"+psd.replaceString+"','repLayer':"+psd.repLayer+",'replaceLayer':'"+psd.replaceLayer+"'";
+                                        psdInput = "            '"+p+"' : {'name':'"+psd.name+"','path':'"+psd.file.getAbsolutePath().replace("\\","\\\\")+"','limit':"+psd.charLimit+",'repString':"+psd.repString+",'replaceWord':'"+psd.replaceString+"','repLayer':"+psd.repLayer+",'replaceLayer':'"+psd.replaceLayer+"'";
                                         psdInput+="},\n";
                                         data.add(psdInput);
                                     }
-                                    data.add("};\n\n");
-                                    String savePath = saveLocation.getAbsolutePath();
-                                    data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
-                                    for(PsdButton psd :psds){
-                                        data.add("app.open(new File('"+psd.file.getAbsolutePath().replace("\\","\\\\")+"'));\n");
-                                    }
-                                    renameContents.addAll(1,data);
-                                    FileWriter cmdWriter = null;
-                                    try {
-                                        cmdWriter = new FileWriter(renameFile);
-                                    } catch (IOException e) {
-                                        error=true;
-                                        JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
-                                    }
-                                    if(!error){
-                                        for(String line: renameContents){
-                                            try {
-                                                cmdWriter.write(line);
-                                            } catch (IOException e) {
-                                                error=true;
-                                                JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
-                                                break;
-                                            }
-                                        }
+                                    data.add("      }\n     ,'name' : '"+tempED.getName()+"'\n      },\n");
+                                }
+                                data.add("};\n\n");
+                                String savePath = saveLocation.getAbsolutePath();
+                                data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
+                                renameContents.addAll(1,data);
+                                FileWriter cmdWriter = null;
+                                try {
+                                    cmdWriter = new FileWriter(renameFile);
+                                } catch (IOException e) {
+                                    error=true;
+                                    JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                                }
+                                if(!error){
+                                    for(String line: renameContents){
                                         try {
-                                            cmdWriter.close();
+                                            cmdWriter.write(line);
                                         } catch (IOException e) {
                                             error=true;
-                                            JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                            JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
+                                            break;
                                         }
-                                        if(!error){
-                                            if(start&&startStep==5){
-                                                startStep=6;
-                                                stepLabel.setText("Step 6: Run Script in Photoshop");
-                                                if(manualTut){
-                                                    detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
-                                                }
-                                                else{
-                                                    detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the automatic tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
-                                                }
-                                                JButton done = new JButton("Done");
-                                                done.addActionListener(new ActionListener(){
-                                                    public void actionPerformed(ActionEvent a){
-                                                        tutFrame.dispose();
-                                                    }
-                                                });
-                                                tutFrame.add(BorderLayout.SOUTH,done);
-                                                tutFrame.pack();
+                                    }
+                                    try {
+                                        cmdWriter.close();
+                                    } catch (IOException e) {
+                                        error=true;
+                                        JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                    if(!error){
+                                        if(start&&startStep==6){
+                                            startStep=7;
+                                            stepLabel.setText("Step 7: Run Script in Photoshop");
+                                            if(manualTut){
+                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
                                             }
-                                            JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
+                                            else{
+                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the automatic tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                            }
+                                            JButton done = new JButton("Done");
+                                            done.addActionListener(new ActionListener(){
+                                                public void actionPerformed(ActionEvent a){
+                                                    tutFrame.dispose();
+                                                }
+                                            });
+                                            tutFrame.add(BorderLayout.SOUTH,done);
+                                            tutFrame.pack();
                                         }
+                                        JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
                                     }
                                 }
                             }
@@ -569,834 +574,197 @@ public class Main
                 }
             }
         });
+        
         m1.add(m11);
         m1.add(m12);
         m1.add(m13);
+
+        JMenu m2 = new JMenu("Editions");
+        JMenuItem m21 = new JMenuItem("Add Edition");
+        JPanel edPanel = new JPanel();
+        edPanel.setLayout(new BoxLayout(edPanel, BoxLayout.PAGE_AXIS));
+        m21.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String edName = JOptionPane.showInputDialog(frame, "Please input the name of the edition:", "Group"+groupNum);
+                if(edName!=null){
+                    boolean nameExists = false;
+                    for(CardEdition ed : editions){
+                        if (ed.getName().equals(edName)){
+                            nameExists=true;
+                            break;
+                        }
+                    }
+                    if(!nameExists){
+                        CardEdition newEdition = new CardEdition(frame,edName);
+                        editions.add(newEdition);
+                        tPane.add(newEdition,edName);
+                        tPane.setSelectedComponent(newEdition);
+                        groupNum++;
+                        JTextField edField = new JTextField(edName);
+                        edField.addFocusListener(new FocusListener(){
+                            @Override
+                            public void focusGained(FocusEvent e) {
+                                edField.setText("");
+                            }
+
+                            @Override
+                            public void focusLost(FocusEvent e) {
+                                String newName = edField.getText();
+                                boolean nameExists = false;
+                                for(CardEdition ed : editions){
+                                    if (ed.getName().equals(newName)){
+                                        nameExists=true;
+                                        break;
+                                    }
+                                }
+                                if(!nameExists&&newName.length()>0){
+                                    newEdition.setName(newName);
+                                    tPane.setTitleAt(tPane.getComponentZOrder(newEdition),newName);
+                                }
+                                else{
+                                    edField.setText(newEdition.getName());
+                                }
+                            }
+                        });
+                        edField.addMouseListener(new MouseAdapter(){
+                            public void mousePressed(MouseEvent m){
+                                if(SwingUtilities.isRightMouseButton(m)){
+                                    tPane.remove(newEdition);
+                                    edPanel.remove(edField);
+                                    m2.getPopupMenu().setVisible(false);
+                                    m2.getPopupMenu().updateUI();
+                                    m2.getPopupMenu().setVisible(true);
+                                }
+                            }
+                        });
+                        edPanel.add(edField);
+                        if(start&&startStep==1){
+                            startStep=2;
+                            m2.setEnabled(false);
+                            m1.setEnabled(true);
+                            stepLabel.setText("Step 2: Open Psds");
+                            detailPane.setText("Now, open all the sample psds that I included with the program.\nFile->Open PSDs->1,2,3.psd");
+                        }
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(frame, "This edition name is already in use.", "Duplicate Edition Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } 
+        });
+
+        m2.add(edPanel);
+        m2.add(m21);
         
         JMenu m3 = new JMenu("Help");
         JMenuItem m31 = new JMenuItem("Tutorial");
+
         m3.add(m31);
         mb.add(m1);
+        mb.add(m2);
         mb.add(m3);
 
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBounds(0,0,frame.getWidth(),frame.getHeight());
-        psdPanel = new JPanel(new GridLayout(2,1));
-        psdPanel.setBackground(frame.getBackground().darker());
-        psdPanel.setLayout(new BorderLayout());
-        psdPanel.add(BorderLayout.WEST,psdOpenLabel);
-        //psdSettingsPanel.setPreferredSize(new Dimension(frame.getWidth(),(int)(frame.getHeight()*.12)));
-        psdSettingsPanel.setBackground(psdPanel.getBackground());
-        
-        JTextField search = new JTextField("Search for a saved user or add a new one here");
-        //search.setSize(new Dimension(userPanel.getWidth(),(int)(userPanel.getHeight()*.4)));
-        JPanel searchPanel = new JPanel(new BorderLayout());
-        searchPanel.add(BorderLayout.NORTH,search);
-        File userFile = new File("savedUsers.txt");
-        try{
-            savedUsers.clear();
-            userFile.createNewFile();
-            Scanner userFileScanner = new Scanner(userFile);
-            while(userFileScanner.hasNextLine()){
-                savedUsers.add(userFileScanner.nextLine());
-            }
-            userFileScanner.close();
-
-        } catch(Exception e){
-            
-        }
-        DefaultListModel<String> model = new DefaultListModel<>();
-        JList<String> searchList = new JList<String>(model);
-        searchList.setVisible(false);
-        searchList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        for(String user : savedUsers){
-            model.addElement(user);
-        }
-
-        search.addFocusListener(new FocusListener(){
-            public void focusGained(FocusEvent f){
-                if(search.getText().equals("Search for a saved user or add a new one here")){
-                    search.setText("");
-                }
-                if(model.getSize()>0&&searchList.isEnabled()){
-                    searchPanel.setBounds(0,0,frame.getWidth(),100);
-                    searchList.setVisible(true);
-                }
-                else{
-                    searchPanel.setBounds(0,0,frame.getWidth(),20);
-                }
-                frame.validate();
-                frame.repaint();
-            }
-            public void focusLost(FocusEvent f){
-                if(search.getText().length()<1){
-                    search.setText("Search for a saved user or add a new one here");
-                }
-            }
-        });
-
-        searchList.addListSelectionListener(new ListSelectionListener(){
-            public void valueChanged(ListSelectionEvent l){
-                if(searchList.getSelectedValue()!=null){
-                    String searchText = searchList.getSelectedValue();
-                    if(searchText.indexOf(",")!=-1){
-                        String longName = searchText.substring(0,searchText.indexOf(","));
-                        String shortName = searchText.substring(searchText.indexOf(",")+1);
-                        CardUser newUser = createUser(longName,shortName);
-                        newUser.addMouseListener(new MouseAdapter(){
-                            public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!start){
-                                    addedUsers.remove(newUser);
-                                    listedUsersPanel.remove(newUser);
-                                    model.addElement(newUser.fullName);
-                                    frame.validate();
-                                    frame.repaint();
-                                }
-                            }
-                        });
-                    }
-                    else{
-                        String longName = searchText;
-                        CardUser newUser = createUser(longName,null);
-                        newUser.addMouseListener(new MouseAdapter(){
-                            public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!start){
-                                    addedUsers.remove(newUser);
-                                    listedUsersPanel.remove(newUser);
-                                    model.addElement(newUser.fullName);
-                                    frame.validate();
-                                    frame.repaint();
-                                }
-                            }
-                        });
-                    }
-                    //model.removeElement(searchText);
-                    search.setText("");
-                    search.requestFocusInWindow();
-                }
-            }
-        });
-
-        searchList.addMouseListener(new MouseAdapter(){
-            public void mousePressed(MouseEvent m){
-                if(SwingUtilities.isRightMouseButton(m)){
-                    JList list = (JList)m.getSource();
-                    int row=list.locationToIndex(m.getPoint());
-                    savedUsers.remove(model.getElementAt(row));
-                    model.removeElementAt(row);
-                    saveUsers();
-                    if(model.getSize()==0){
-                        searchPanel.setBounds(0,0,frame.getWidth(),20);
-                        list.setVisible(false);
-                    }
-                }
-            }
-        });
-        
-        search.getDocument().addDocumentListener(new DocumentListener(){
-            public void changedUpdate(DocumentEvent d){
-            }
-            public void insertUpdate(DocumentEvent d){
-                model.clear();
-                for(String searchedUser: savedUsers){
-                    boolean notAlreadyAdded=true;
-                    for(CardUser u : addedUsers){
-                        if(u.fullName.equals(searchedUser)){
-                            notAlreadyAdded=false;
-                        }
-                    }
-                    if(notAlreadyAdded&&searchedUser.toLowerCase().startsWith(search.getText().toLowerCase())){
-                        model.addElement(searchedUser);
-                    }
-                }
-
-            }
-            public void removeUpdate(DocumentEvent d){
-                model.clear();
-                for(String searchedUser: savedUsers){
-                    boolean notAlreadyAdded=true;
-                    for(CardUser u : addedUsers){
-                        if(u.fullName.equals(searchedUser)){
-                            notAlreadyAdded=false;
-                        }
-                    }
-                    if(notAlreadyAdded&&searchedUser.toLowerCase().startsWith(search.getText().toLowerCase())){
-                        model.addElement(searchedUser);
-                    }
-                }
-            }
-        });
-
-        search.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent a){
-                if(!start&&(model.getSize()>0&&search.getText().equals(model.getElementAt(0))||savedUsers.contains(search.getText()))){
-                    searchList.setVisible(false);
-                    frame.validate();
-                    frame.repaint();
-                    frame.requestFocusInWindow();
-                    String searchText = search.getText();
-                    if(searchText.indexOf(",")!=-1){
-                        String longName = searchText.substring(0,searchText.indexOf(","));
-                        String shortName = searchText.substring(searchText.indexOf(",")+1);
-                        CardUser newUser = createUser(longName,shortName);
-                        newUser.addMouseListener(new MouseAdapter(){
-                            public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!start){
-                                    addedUsers.remove(newUser);
-                                    listedUsersPanel.remove(newUser);
-                                    model.addElement(newUser.fullName);
-                                    frame.validate();
-                                    frame.repaint();
-                                }
-                            }
-                        });
-                    }
-                    else{
-                        String longName = searchText;
-                        CardUser newUser = createUser(longName,null);
-                        newUser.addMouseListener(new MouseAdapter(){
-                            public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!start){
-                                    addedUsers.remove(newUser);
-                                    listedUsersPanel.remove(newUser);
-                                    model.addElement(newUser.fullName);
-                                    frame.validate();
-                                    frame.repaint();
-                                }
-                            }
-                        });
-                    }
-                    search.setText("");
-                }
-                else{
-                    final JDialog newUserDialog = new JDialog(frame,"New User",true);
-                    //newUserDialog.setPreferredSize(new Dimension((int)(frame.getWidth()*.4),(int)(frame.getHeight()*.4)));
-                    JTextField longName = new JTextField();
-                    TitledBorder longBorder = BorderFactory.createTitledBorder("Default");
-                    longBorder.setTitleJustification(TitledBorder.CENTER);
-                    longName.setBorder(longBorder);
-                    longName.setHorizontalAlignment(JTextField.CENTER);
-                    JTextField shortName = new JTextField();
-                    TitledBorder shortBorder = BorderFactory.createTitledBorder("Alternative");
-                    shortBorder.setTitleJustification(TitledBorder.CENTER);
-                    shortName.setBorder(shortBorder);
-                    shortName.setHorizontalAlignment(JTextField.CENTER);
-                    String searchText = search.getText();
-                    if(searchText.indexOf(",")!=-1){
-                        longName.setText(searchText.substring(0,searchText.indexOf(",")));
-                        shortName.setText(searchText.substring(searchText.indexOf(",")+1));
-                    }
-                    else{
-                        longName.setText(searchText);
-                    }
-                    JButton done = new JButton("Done");
-                    done.addActionListener(new ActionListener(){
-                        public void actionPerformed(ActionEvent a){
-                            if(longName.getText().length()>0){
-                                if(shortName.getText().length()>0){
-                                    if(!start){
-                                        savedUsers.add(longName.getText()+","+shortName.getText());
-                                    }
-                                    CardUser newUser = createUser(longName.getText(),shortName.getText());
-                                    newUser.addMouseListener(new MouseAdapter(){
-                                        public void mousePressed(MouseEvent m){
-                                            if(SwingUtilities.isRightMouseButton(m)&&!start){
-                                                addedUsers.remove(newUser);
-                                                listedUsersPanel.remove(newUser);
-                                                model.addElement(newUser.fullName);
-                                                frame.validate();
-                                                frame.repaint();
-                                            }
-                                        }
-                                    });
-                                }
-                                else{
-                                    savedUsers.add(longName.getText());
-                                    CardUser newUser = createUser(longName.getText(),null);
-                                    newUser.addMouseListener(new MouseAdapter(){
-                                        public void mousePressed(MouseEvent m){
-                                            if(SwingUtilities.isRightMouseButton(m)&&!start){
-                                                addedUsers.remove(newUser);
-                                                listedUsersPanel.remove(newUser);
-                                                model.addElement(newUser.fullName);
-                                                frame.validate();
-                                                frame.repaint();
-                                            }
-                                        }
-                                    });
-                                }
-                                if(addedUsers.size()>0&&start&&startStep==2){
-                                    startStep=3;
-                                    stepLabel.setText("Step 3: Add PSDs to User's List");
-                                    detailPane.setText("Now, give yourself some cards.\n Simply drag each psd one at a time into your list.\nThis can be done faster by selecting all the psds at once as if you were selecting files.\nI.e. Select the leftmost psd. Hold shift and select the rightmost psd. Then drag them into the list.");
-                                    search.setText("");
-                                    search.setEnabled(false);
-                                    for(PsdButton psd: psds){
-                                        psd.setEnabled(true);
-                                    }
-                                    tutFrame.pack();
-                                }
-                            }
-                            saveUsers();
-                            search.setText("");
-                            newUserDialog.dispose();
-                            frame.requestFocusInWindow();
-                            searchList.setVisible(false);
-                            frame.repaint();
-                            frame.validate();
-                        }
-                    });
-                    JButton cancel = new JButton("Cancel");
-                    cancel.addActionListener(new ActionListener(){
-                        public void actionPerformed(ActionEvent a){
-                            newUserDialog.dispose();
-                        }
-                    });
-                    JPanel buttonPanel = new JPanel(new FlowLayout());
-                    buttonPanel.add(done);
-                    buttonPanel.add(cancel);
-                    newUserDialog.add(BorderLayout.NORTH,longName);
-                    newUserDialog.add(BorderLayout.CENTER,shortName);
-                    newUserDialog.add(BorderLayout.SOUTH,buttonPanel);
-                    newUserDialog.pack();
-                    newUserDialog.setLocationRelativeTo(frame);
-                    newUserDialog.setVisible(true);
-                }
-            }
-        });
-        JScrollPane nameScroller = new JScrollPane(searchList);
-        searchPanel.add(nameScroller);
-        JLayeredPane lPane = new JLayeredPane();
-        listedUsersPanel.setBounds(0,18,(int)(frame.getWidth()-18),(int)(frame.getHeight()*.8));
-        listedUsersPanel.setPreferredSize(new Dimension((int)(frame.getWidth()-18),(int)(frame.getHeight()*.8)));
-        searchPanel.setBounds(0,0,frame.getWidth(),100);
-        lPane.add(searchPanel,1,0);
-        lPane.add(listedUsersPanel,0,0);
-        userPanel.setLayout(new BorderLayout());
-        userPanel.add(BorderLayout.CENTER,lPane);
-        
-        search.addFocusListener(new FocusAdapter(){
-            public void focusGained(FocusEvent f){
-                lPane.setLayer(searchPanel, 1);
-                lPane.setLayer(listedUsersPanel, 0);
-            }
-            public void focusLost(FocusEvent f){
-                lPane.setLayer(searchPanel, 0);
-                lPane.setLayer(listedUsersPanel, 1);
-            }
-        });
-        
-        contentPanel.add(BorderLayout.NORTH,psdPanel);
-        contentPanel.add(userPanel);
+    
 
         frame.add(BorderLayout.NORTH,mb);
-        framePane.add(contentPanel,0,0);
-        framePane.add(dragDropPanel,1,0);
-        dragDropPanel.setOpaque(false);
-        frame.add(BorderLayout.CENTER,contentPanel);
+
         frame.addMouseListener(new MouseAdapter(){
             public void mousePressed(MouseEvent m){
                 frame.requestFocusInWindow();
             }
         });
-        
-        frame.addWindowFocusListener(new WindowAdapter(){
-            public void windowGainedFocus(WindowEvent w){
-                searchList.setVisible(false);
-                frame.validate();
-                frame.repaint();
-            }
-            public void windowLostFocus(WindowEvent w){
-                ctrlHeld=false;
-                shiftHeld=false;
-            }
-        });
 
-        frame.addComponentListener(new ComponentAdapter(){
-            public void componentResized(ComponentEvent c){
-                listedUsersPanel.setBounds(0,18,(int)(frame.getWidth()-15),(int)(frame.getHeight()*.8));
-                listedUsersPanel.setPreferredSize(new Dimension((int)(frame.getWidth()-15),(int)(frame.getHeight()*.8)));
-                searchPanel.setBounds(0,0,frame.getWidth(),100);
-            }
-        });
-
-        frame.addKeyListener(new KeyAdapter(){
-            public void keyPressed(KeyEvent k){
-                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&!ctrlHeld){
-                    ctrlHeld=true;
-                }
-                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&!shiftHeld){
-                    shiftHeld=true;
-                }
-            }
-            public void keyReleased(KeyEvent k){
-                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&ctrlHeld){
-                    ctrlHeld=false;
-                }
-                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&shiftHeld){
-                    shiftHeld=false;
-                }
-            }
-        });
         frame.setVisible(true);
         m11.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                final JFileChooser psdSelecter = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
-                if(start==false){
-                    if(lastOpenLocation!=null){
-                        psdSelecter.setCurrentDirectory(lastOpenLocation);
-                    }
-                    psdSelecter.setMultiSelectionEnabled(true);
-                    psdSelecter.setFileFilter(new FileNameExtensionFilter("Photoshop Projects","psd"));
-                }
-                else{
-                    File samplesFolder = new File("Samples");
-                    if(samplesFolder.exists()){
-                        psdSelecter.setCurrentDirectory(samplesFolder);
+                if(editions.size()>0){
+                    final JFileChooser psdSelecter = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
+                    if(start==false){
+                        if(lastOpenLocation!=null){
+                            psdSelecter.setCurrentDirectory(lastOpenLocation);
+                        }
                         psdSelecter.setMultiSelectionEnabled(true);
+                        psdSelecter.setFileFilter(new FileNameExtensionFilter("Photoshop Projects","psd"));
                     }
                     else{
-                        if(tutFrame!=null){
-                            tutFrame.dispose();
+                        File samplesFolder = new File("Samples");
+                        if(samplesFolder.exists()){
+                            psdSelecter.setCurrentDirectory(samplesFolder);
+                            psdSelecter.setMultiSelectionEnabled(true);
                         }
-                    }
-                }
-                ArrayList<File> chosenFiles = new ArrayList<File>();
-                psdSelecter.addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY,new PropertyChangeListener(){
-                    public void propertyChange(PropertyChangeEvent pc){
-                        List<File> selected = Arrays.asList(psdSelecter.getSelectedFiles());
-                        for(File chosen : chosenFiles){
-                            if(!selected.contains(chosen)){
-                                chosenFiles.remove(chosen);
-                            }
-                        }
-                        for(File select: selected){
-                            if(!chosenFiles.contains(select)){
-                                chosenFiles.add(select);
+                        else{
+                            if(tutFrame!=null){
+                                tutFrame.dispose();
                             }
                         }
                     }
-                });
-                if(psdSelecter.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
-                    ArrayList<String> chosenNames = new ArrayList<String>();
-                    for(File f: chosenFiles){
-                        chosenNames.add(f.getName());
-                    }
-                    if(!start||(start&&chosenNames.contains("1.psd")&&chosenNames.contains("2.psd")&&chosenNames.contains("3.psd"))){
-                        File[] psdFiles  = new File[chosenFiles.size()];
-                        for(int f=0; f<chosenFiles.size(); f++){
-                            psdFiles[f]=chosenFiles.get(f);
-                        }
-                        if(!start){
-                            lastOpenLocation = psdFiles[0].getParentFile();
-                        }
-                        for(int i=0; i<psdFiles.length; i++){
-                            boolean alreadyExists=false;
-                            for(PsdButton psd: psds){
-                                if(psd.name.equals(psdFiles[i].getName())){
-                                    alreadyExists=true;
+                    ArrayList<File> chosenFiles = new ArrayList<File>();
+                    psdSelecter.addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY,new PropertyChangeListener(){
+                        public void propertyChange(PropertyChangeEvent pc){
+                            List<File> selected = Arrays.asList(psdSelecter.getSelectedFiles());
+                            for(File chosen : chosenFiles){
+                                if(!selected.contains(chosen)){
+                                    chosenFiles.remove(chosen);
                                 }
                             }
-                            if(!alreadyExists){
-                                PsdButton tempBtn = new PsdButton(psdFiles[i]);
-                                tempBtn.setFocusable(false);
-                                tempBtn.addActionListener(new ActionListener(){
-                                    public void actionPerformed(ActionEvent a){
-                                        frame.requestFocusInWindow();
-                                        psdSettingsPanel.removeAll();
-                                        psdSettingsPanel.setVisible(false);
-                                        if(tempBtn.selected){
-                                            tempBtn.setBackground(null);
-                                            tempBtn.selected=false;
-                                        }
-                                        else if(!tempBtn.selected){
-                                            if(!ctrlHeld){
-                                                for(PsdButton psd : psds){
-                                                    if(psd.selected){
-                                                        psd.setBackground(null);
-                                                        psd.selected=false;
-                                                    }
-                                                }
-                                            }
-                                            int currIndex = psds.indexOf(tempBtn);
-                                            if(shiftHeld){
-                                                if(currIndex<lastSelectedIndex){
-                                                    for(int i=currIndex; i<=lastSelectedIndex; i++){
-                                                        psds.get(i).selected=true;
-                                                        psds.get(i).setBackground(Color.cyan);
-                                                    }
-                                                }
-                                                else{
-                                                    for(int i=lastSelectedIndex; i<=currIndex; i++){
-                                                        psds.get(i).selected=true;
-                                                        psds.get(i).setBackground(Color.cyan);
-                                                    }
-                                                }
-                                            }
-                                            tempBtn.setBackground(Color.cyan);
-                                            tempBtn.selected=true;
-                                            lastSelectedIndex=currIndex;
-                                        }
-                                        ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
-                                        for(PsdButton psd : psds){
-                                            if(psd.selected){
-                                                selectedPsds.add(psd);
-                                            }
-                                        }
-                                        if(selectedPsds.size()>0){
-                                            JLabel psdLabel = null;
-                                            if(selectedPsds.size()<=3){
-                                                String psdNames = "";
-                                                for(int i=0; i<selectedPsds.size(); i++){
-                                                    PsdButton indexPsd = selectedPsds.get(i);
-                                                    if(i<selectedPsds.size()-1){
-                                                        psdNames+=indexPsd.name+",";
-                                                    }
-                                                    else{
-                                                        psdNames+=indexPsd.name;
-                                                    }
-                                                }
-                                                psdLabel = new JLabel(psdNames+": ",JLabel.RIGHT);
-                                            }
-                                            else{
-                                                String psdNames = "";
-                                                for(int i=0; i<3; i++){
-                                                    PsdButton indexPsd = selectedPsds.get(i);
-                                                    if(i<2){
-                                                        psdNames+=indexPsd.name+",";
-                                                    }
-                                                    else{
-                                                        psdNames+=indexPsd.name;
-                                                    }
-                                                }
-                                                String lastPsdName = selectedPsds.get(selectedPsds.size()-1).name;
-                                                psdLabel = new JLabel(psdNames+"..."+lastPsdName+": ",JLabel.RIGHT);
-                                            }
-
-                                            TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
-                                            textBorder.setTitleJustification(TitledBorder.CENTER);
-                                            JTextField cLimitText = new JTextField(9);
-                                            cLimitText.setBackground(psdSettingsPanel.getBackground());
-                                            cLimitText.setHorizontalAlignment(JTextField.CENTER);
-                                            cLimitText.setBorder(textBorder);
-                                            boolean sameLimit=true;
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
-                                                    sameLimit=false;
-                                                }
-                                            }
-                                            if(sameLimit){
-                                                cLimitText.setText(String.valueOf(tempBtn.charLimit));
-                                            }
-                                            cLimitText.addFocusListener(new FocusListener(){
-                                                public void focusGained(FocusEvent f){
-                                                    cLimitText.setText("");
-                                                }
-                                                public void focusLost(FocusEvent f){
-                                                    try{
-                                                        int cLimit = Integer.valueOf(cLimitText.getText());
-                                                        for(PsdButton psd : psds){
-                                                            if(psd.selected){   
-                                                                psd.charLimit= cLimit;
-                                                            }
-                                                        }
-                                                    } catch(NumberFormatException e){
-                                                        boolean sameLimit=true;
-                                                        for(PsdButton psd : psds){
-                                                            if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
-                                                                sameLimit=false;
-                                                            }
-                                                        }
-                                                        if(sameLimit){
-                                                            cLimitText.setText(String.valueOf(tempBtn.charLimit));
-                                                        }
-                                                        else{
-                                                            cLimitText.setText("");
-                                                        }
-                                                    }
-                                                }
-                                            });
-
-                                            textBorder = BorderFactory.createTitledBorder("altName");
-                                            textBorder.setTitleJustification(TitledBorder.CENTER);
-                                            JTextField altNameText = new JTextField(9);
-                                            altNameText.setBackground(psdSettingsPanel.getBackground());
-                                            altNameText.setHorizontalAlignment(JTextField.CENTER);
-                                            altNameText.setBorder(textBorder);
-                                            altNameText.setText(tempBtn.altName);
-                                            altNameText.addFocusListener(new FocusListener(){
-                                                public void focusGained(FocusEvent f){
-                                                    altNameText.setText("");
-                                                }
-                                                public void focusLost(FocusEvent f){
-                                                    tempBtn.altName=altNameText.getText();
-                                                }
-                                            });
-                                            
-
-                                            textBorder = BorderFactory.createTitledBorder("Replace Text");
-                                            textBorder.setTitleJustification(TitledBorder.CENTER);
-                                            JTextField replaceText = new JTextField(9);
-                                            replaceText.setBackground(psdSettingsPanel.getBackground());
-                                            replaceText.setHorizontalAlignment(JTextField.CENTER);
-                                            replaceText.setBorder(textBorder);
-                                            boolean sameReplace = true;
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
-                                                    sameReplace=false;
-                                                }
-                                            }
-                                            if(sameReplace){
-                                                replaceText.setText(tempBtn.replaceString);
-                                            }
-                                            replaceText.addFocusListener(new FocusListener(){
-                                                public void focusGained(FocusEvent f){
-                                                    replaceText.setText("");
-                                                }
-                                                public void focusLost(FocusEvent f){
-                                                    if(replaceText.getText().length()==0){
-                                                        boolean sameReplace = true;
-                                                        for(PsdButton psd : psds){
-                                                            if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
-                                                                sameReplace=false;
-                                                            }
-                                                        }
-                                                        if(sameReplace){
-                                                            replaceText.setText(tempBtn.replaceString);
-                                                        }
-                                                        else{
-                                                            replaceText.setText("");
-                                                        }
-                                                    }
-                                                    else{
-                                                        for(PsdButton psd : psds){
-                                                            if(psd.selected){
-                                                                psd.replaceString=replaceText.getText();
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
-
-                                            textBorder = BorderFactory.createTitledBorder("Replace Layer");
-                                            textBorder.setTitleJustification(TitledBorder.CENTER);
-                                            JTextField replaceLayer = new JTextField(9);
-                                            replaceLayer.setBackground(psdSettingsPanel.getBackground());
-                                            replaceLayer.setHorizontalAlignment(JTextField.CENTER);
-                                            replaceLayer.setBorder(textBorder);
-                                            boolean sameReplaceLayer = true;
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected&&!psd.replaceLayer.equals(tempBtn.replaceLayer)){
-                                                    sameReplaceLayer=false;
-                                                }
-                                            }
-                                            if(sameReplaceLayer){
-                                                replaceLayer.setText(tempBtn.replaceLayer);
-                                            }
-                                            replaceLayer.addFocusListener(new FocusListener(){
-                                                public void focusGained(FocusEvent f){
-                                                    replaceLayer.setText("");
-                                                }
-                                                public void focusLost(FocusEvent f){
-                                                    if(replaceLayer.getText().length()==0){
-                                                        boolean sameReplaceLayer = true;
-                                                        for(PsdButton psd : psds){
-                                                            if(psd.selected&&!psd.replaceLayer.equals(tempBtn.replaceLayer)){
-                                                                sameReplaceLayer=false;
-                                                            }
-                                                        }
-                                                        if(sameReplaceLayer){
-                                                            replaceLayer.setText(tempBtn.replaceLayer);
-                                                        }
-                                                        else{
-                                                            replaceLayer.setText("");
-                                                        }
-                                                    }
-                                                    else{
-                                                        for(PsdButton psd : psds){
-                                                            if(psd.selected){
-                                                                psd.replaceLayer=replaceLayer.getText();
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
-
-                                            JRadioButton repStringBtn = new JRadioButton("Text",true);
-                                            repStringBtn.addActionListener(new ActionListener(){
-                                                public void actionPerformed(ActionEvent a) {
-                                                    if(repStringBtn.isSelected()){
-                                                        replaceText.setEnabled(true);
-                                                        for(PsdButton psd: psds){
-                                                            if(psd.selected){
-                                                                psd.repString=true;
-                                                            }
-                                                        }
-                                                    }
-                                                    else{
-                                                        replaceText.setEnabled(false);
-                                                        for(PsdButton psd: psds){
-                                                            if(psd.selected){
-                                                                psd.repString=false;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                            JRadioButton repLayerBtn = new JRadioButton("Layer",false);
-                                            repLayerBtn.addActionListener(new ActionListener(){
-                                                public void actionPerformed(ActionEvent a) {
-                                                    if(repLayerBtn.isSelected()){
-                                                        replaceLayer.setEnabled(true);
-                                                        for(PsdButton psd: psds){
-                                                            if(psd.selected){
-                                                                psd.repLayer=true;
-                                                            }
-                                                        }
-                                                    }
-                                                    else{
-                                                        replaceLayer.setEnabled(false);
-                                                        for(PsdButton psd: psds){
-                                                            if(psd.selected){
-                                                                psd.repLayer=false;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                            boolean sameLayerSetting = true;
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected&&psd.repLayer!=tempBtn.repLayer){
-                                                    sameLayerSetting=false;
-                                                }
-                                            }
-                                            if(!sameLayerSetting){
-                                                replaceLayer.setEnabled(false);
-                                                repLayerBtn.setSelected(false);
-                                            }
-                                            else{
-                                                repLayerBtn.setSelected(tempBtn.repLayer);
-                                                replaceLayer.setEnabled(tempBtn.repLayer);
-                                            }
-
-                                            boolean sameTextSetting = true;
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected&&psd.repString!=tempBtn.repString){
-                                                    sameTextSetting=false;
-                                                }
-                                            }
-                                            if(!sameTextSetting){
-                                                replaceText.setEnabled(false);
-                                                repStringBtn.setSelected(false);
-                                            }
-                                            else{
-                                                repStringBtn.setSelected(tempBtn.repString);
-                                                replaceText.setEnabled(tempBtn.repString);
-                                            }
-
-                                            psdSettingsPanel.add(psdLabel);
-                                            psdSettingsPanel.add(cLimitText);
-                                            int numSelected=0;
-                                            for(PsdButton psd: psds){
-                                                if(psd.selected){
-                                                    numSelected++;
-                                                }
-                                            }
-                                            if(numSelected<2){
-                                                psdSettingsPanel.add(altNameText);
-                                            }
-                                            JPanel replacePanel = new JPanel(new GridLayout(2,1));
-                                            replacePanel.setBackground(psdSettingsPanel.getBackground());
-                                            TitledBorder replaceBorder = BorderFactory.createTitledBorder("Replace:");
-                                            replaceBorder.setTitleJustification(TitledBorder.CENTER);
-                                            replacePanel.setBorder(replaceBorder);
-                                            repStringBtn.setBackground(psdSettingsPanel.getBackground());
-                                            repLayerBtn.setBackground(psdSettingsPanel.getBackground());
-                                            replacePanel.add(repStringBtn);
-                                            replacePanel.add(repLayerBtn);
-                                            psdSettingsPanel.add(replacePanel);
-                                            psdSettingsPanel.add(replaceText);
-                                            psdSettingsPanel.add(replaceLayer);
-                                            psdSettingsPanel.setVisible(true);
-                                        }
-                                        frame.validate();
-                                        frame.repaint();
-                                    }
-                                });
-                                
-                                tempBtn.addMouseMotionListener(new MouseAdapter(){
-                                    public void mouseDragged(MouseEvent m){
-                                        PsdButton button = (PsdButton) m.getSource();
-                                        if(!button.selected){
-                                            tempBtn.setTransferHandler(new PsdExportTransferHandler(new PsdButton[]{tempBtn}));
-                                            tempBtn.setEnabled(false);
-                                            tempBtn.setEnabled(true);
-                                        }
-                                        else{
-                                            ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
-                                            for(PsdButton psd : psds){
-                                                if(psd.selected){
-                                                    selectedPsds.add(psd);
-                                                }
-                                            }
-                                            tempBtn.setTransferHandler(new PsdExportTransferHandler(selectedPsds.toArray(new PsdButton[0])));
-                                            tempBtn.setEnabled(false);
-                                            tempBtn.setEnabled(true);
-                                        }
-                                        TransferHandler handle = button.getTransferHandler();
-                                        handle.exportAsDrag(button, m, TransferHandler.COPY);
-                                    }
-                                });
-                                psds.add(tempBtn);
-                                buttonPanel.add(tempBtn);
-                                if(buttonPanel.getComponentCount()<10){
-                                    ((GridLayout)buttonPanel.getLayout()).setColumns(buttonPanel.getComponentCount());
+                            for(File select: selected){
+                                if(!chosenFiles.contains(select)){
+                                    chosenFiles.add(select);
+                                }
+                            }
+                        }
+                    });
+                    if(psdSelecter.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
+                        ArrayList<String> chosenNames = new ArrayList<String>();
+                        for(File f: chosenFiles){
+                            chosenNames.add(f.getName());
+                        }
+                        if(!start||(start&&chosenNames.contains("1.psd")&&chosenNames.contains("2.psd")&&chosenNames.contains("3.psd"))){
+                            
+                            PsdButton[] psdBtns  = new PsdButton[chosenFiles.size()];
+                            for(int f=0; f<chosenFiles.size(); f++){
+                                psdBtns[f]=new PsdButton(chosenFiles.get(f));
+                                psds.add(psdBtns[f]);
+                            }
+                            lastOpenLocation = chosenFiles.get(0).getParentFile();
+                            selectedGroup.addPsds(psdBtns);
+                            frame.validate();
+                            frame.repaint();
+                            
+                            if(start&&startStep==2){
+                                startStep=3;
+                                if(manualTut){
+                                    stepLabel.setText("Step 3: Add User");
+                                    detailPane.setText("Now, add a user, a.k.a the person that requested the cards in the search bar.\nThe format for adding a new user is:\n \"defaultName,alternateName\"\nLet's start by adding yourself as a user.\n Type in your default and alternate names in the above format.\n I.e. this is how mine would look. DawnofNyx,Dawn\nOnce you're done, just hit enter.");
                                 }
                                 else{
-                                    ((GridLayout)buttonPanel.getLayout()).setColumns(10);
+                                    stepLabel.setText("Step 3: Read Webpage");
+                                    detailPane.setText("Now, if you haven't already, open the sample request page I made in the MALCardNamer club.\nCreate your own request and keep that webpage open.\nNow navigate to File->Read Webpage in the program and click it.");
+                                    m12.setEnabled(true);
                                 }
+                                tutFrame.pack();
+                                m11.setEnabled(false);
+                                for(PsdButton psd : selectedGroup.getPsds()){
+                                    psd.setEnabled(false);
+                                }
+                                tutFrame.validate();
+                                tutFrame.repaint();
                             }
-                        }
-                        for(PsdButton psd: psds){
-                            psd.selected=false;
-                            psd.setBackground(null);
-                        }
-                        psdPanel.removeAll();
-                        psdSettingsPanel.setVisible(false);
-                        psdPanel.add(BorderLayout.CENTER,buttonPanel);
-                        psdPanel.add(BorderLayout.SOUTH,psdSettingsPanel);
-                        frame.validate();
-                        frame.repaint();
-                        if(start&&startStep==1){
-                            startStep=2;
-                            if(manualTut){
-                                stepLabel.setText("Step 2: Add User");
-                                detailPane.setText("Now, add a user, a.k.a the person that requested the cards in the search bar.\nThe format for adding a new user is:\n \"defaultName,alternateName\"\nLet's start by adding yourself as a user.\n Type in your default and alternate names in the above format.\n I.e. this is how mine would look. DawnofNyx,Dawn\nOnce you're done, just hit enter.");
-                                search.setEnabled(true);
-                            }
-                            else{
-                                stepLabel.setText("Step 2: Read Webpage");
-                                detailPane.setText("Now, if you haven't already, open the sample request page I made in the MALCardNamer club.\nCreate your own request and keep that webpage open.\nNow navigate to File->Read Webpage in the program and click it.");
-                                m12.setEnabled(true);
-                            }
-                            tutFrame.pack();
-                            m11.setEnabled(false);
                             
-                            searchList.setEnabled(false);
-                            for(PsdButton psd : psds){
-                                psd.setEnabled(false);
-                            }
-                            tutFrame.validate();
-                            tutFrame.repaint();
                         }
+                        else{
+                            JOptionPane.showMessageDialog(frame, "Please select all the sample psds\n1.psd,2.psd, and 3.psd", "Missing Samples Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                        
                     }
-                    else{
-                        JOptionPane.showMessageDialog(frame, "Please select all the sample psds\n1.psd,2.psd, and 3.psd", "Missing Samples Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                }
+                else{
+                    JOptionPane.showMessageDialog(frame, "Please create an Edition first.", "No Editions Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
-
+        
         m31.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
                 Object[] options = {"Manual","Automatic","Cancel"};
@@ -1410,14 +778,13 @@ public class Main
                     }
                     start=true;
                     startStep=1;
+                    tPane.removeAll();
+                    editions.clear();
+                    edPanel.removeAll();
+                    m1.setEnabled(false);
                     m12.setEnabled(false);
                     m3.setEnabled(false);
-                    search.setEnabled(false);
                     psds.clear();
-                    addedUsers.clear();
-                    buttonPanel.removeAll();
-                    psdPanel.removeAll();
-                    listedUsersPanel.removeAll();
                     frame.requestFocusInWindow();
                     tutFrame = new JFrame("Tutorial Window");
                     tutFrame.setResizable(false);
@@ -1425,7 +792,7 @@ public class Main
                     stepLabel = new JLabel();
                     stepLabel.setHorizontalAlignment(JLabel.CENTER);
                     stepLabel.setForeground(Color.CYAN);
-                    stepLabel.setText("Step 1: Open PSDs");
+                    stepLabel.setText("Step 1: Create Edition");
                     tutFrame.add(BorderLayout.NORTH,stepLabel);
                     detailPane = new JTextPane();
                     StyledDocument doc = detailPane.getStyledDocument();
@@ -1433,7 +800,7 @@ public class Main
                     StyleConstants.setAlignment(center,StyleConstants.ALIGN_CENTER);
                     doc.setParagraphAttributes(0,doc.getLength(),center,false);
                     detailPane.setEditable(false);
-                    detailPane.setText("First, open all the sample psds that I included with the program.\nFile->Open PSDs->1,2,3.psd");
+                    detailPane.setText("First, go to Editions->Add Edition and create a group for your psds.\nSince we're using my club's OMCs, you could name this edition:\n'MALCardNamerOMC'");
                     tutFrame.add(BorderLayout.CENTER,detailPane);
                     tutFrame.pack();
                     tutFrame.setLocationRelativeTo(frame);
@@ -1446,13 +813,12 @@ public class Main
                             m11.setEnabled(true);
                             m12.setEnabled(true);
                             m13.setEnabled(true);
+                            m2.setEnabled(true);
                             m3.setEnabled(true);
-                            search.setEnabled(true);
                             m1.setEnabled(true);
-                            searchList.setEnabled(true);
-                            for(PsdButton psd : psds){
-                                psd.setEnabled(true);
-                            }
+                            tPane.removeAll();
+                            edPanel.removeAll();
+                            editions.clear();
                         }
                         public void windowClosed(WindowEvent w){
                             start=false;
@@ -1460,19 +826,19 @@ public class Main
                             m11.setEnabled(true);
                             m12.setEnabled(true);
                             m13.setEnabled(true);
+                            m2.setEnabled(true);
                             m3.setEnabled(true);
-                            search.setEnabled(true);
                             m1.setEnabled(true);
-                            searchList.setEnabled(true);
-                            for(PsdButton psd : psds){
-                                psd.setEnabled(true);
-                            }
+                            tPane.removeAll();
+                            edPanel.removeAll();
+                            editions.clear();
                         }
                     });
 
                 }
             }
         });  
+        
        
        saveData = new File("saveData.txt");
        try{
@@ -1516,70 +882,6 @@ public class Main
         catch (NumberFormatException e){
             return false;
         }
-    }
-
-    private  static void saveUsers(){
-        File savedUserFile = new File("savedUsers.txt");
-        try{
-            savedUserFile.createNewFile();
-            FileWriter savedWriter = new FileWriter(savedUserFile);
-            Collections.sort(savedUsers);
-            for(String user: savedUsers){
-                savedWriter.write(user+"\n");
-            }
-            savedWriter.close();
-        }catch(IOException e){
-
-        }
-    }
-
-    private static CardUser createUser(String longName, String shortName){
-        for(CardUser user: addedUsers){
-            if(user.names[0].equals(longName)){
-                return user;
-            }
-        }
-        CardUser userPanel = null;
-        if(shortName!=null){
-            userPanel = new CardUser(longName,shortName);
-        }
-        else{
-            userPanel = new CardUser(longName);
-        }
-        addedUsers.add(userPanel);
-        listedUsersPanel.add(userPanel);
-        TitledBorder nameBorder  = BorderFactory.createTitledBorder(longName);
-        nameBorder.setTitleJustification(TitledBorder.CENTER);
-        userPanel.setBorder(nameBorder);
-        userPanel.cardList.addPropertyChangeListener(new PropertyChangeListener(){
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if(start&&startStep==3){
-                    startStep=4;
-                    stepLabel.setText("Step 4: PSD Settings");
-                    detailPane.setText("If you click on any of the psds at the top, you'll see a settings panel.\nHere is where you can set: \n\"charLimit\", the max length of a name.\n\"altName\",the name of your card on the request site. (Only if you're reading webpage)\n\"replace\",the word to replace in your psds text layers with the requester's name.\nAll of these are set correctly for the moment.\nPress Next when you're ready to move on.");
-                    JButton nxt = new JButton("Next");
-                    nxt.addActionListener(new ActionListener(){
-                        public void actionPerformed(ActionEvent a){
-                            startStep=5;
-                            stepLabel.setText("Step 5: Save Script");
-                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
-                            tutFrame.remove(nxt);
-                            tutFrame.pack();
-                            tutFrame.validate();
-                            tutFrame.repaint();
-                            
-                        }
-                    });
-                    tutFrame.add(BorderLayout.SOUTH,nxt);
-                    tutFrame.pack();
-                }
-            }
-            
-        });
-        frame.validate();
-        frame.repaint();
-        return userPanel;
     }
     
     private static void getPhotoFile(){
