@@ -8,10 +8,16 @@ for(var group in groups){
 
     for(var d=0; d<app.documents.length; d++){
         app.documents[d].close(SaveOptions.DONOTSAVECHANGES);
+        d--;
     }
 
     for(var psd in psds){
         app.open(new File(psds[psd].path));
+    }
+
+    var ed_folder = Folder(save_location+"/"+edName);
+    if(!ed_folder.exists){
+        ed_folder.create();
     }
 
     for(var user in users){
