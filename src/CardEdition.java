@@ -109,9 +109,9 @@ public class CardEdition extends JPanel {
         DefaultListModel<String> model = new DefaultListModel<>();
         
         JList<String> searchList = new JList<String>(model);
-        if(Maincopy.start){
+        if(Main.start){
             searchList.setEnabled(false);
-            if(Maincopy.manualTut){
+            if(Main.manualTut){
                 search.setEnabled(true);
             }
             else{
@@ -157,7 +157,7 @@ public class CardEdition extends JPanel {
                         CardUser newUser = createUser(longName,shortName);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                                if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -172,7 +172,7 @@ public class CardEdition extends JPanel {
                         CardUser newUser = createUser(longName,null);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                                if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -240,7 +240,7 @@ public class CardEdition extends JPanel {
 
         search.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if(!Maincopy.start&&(model.getSize()>0&&search.getText().equals(model.getElementAt(0))||savedUsers.contains(search.getText()))){
+                if(!Main.start&&(model.getSize()>0&&search.getText().equals(model.getElementAt(0))||savedUsers.contains(search.getText()))){
                     nameScroller.setVisible(false);
                     frame.validate();
                     frame.repaint();
@@ -252,7 +252,7 @@ public class CardEdition extends JPanel {
                         CardUser newUser = createUser(longName,shortName);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                                if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -267,7 +267,7 @@ public class CardEdition extends JPanel {
                         CardUser newUser = createUser(longName,null);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                                if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                                     addedUsers.remove(newUser);
                                     listedUsersPanel.remove(newUser);
                                     model.addElement(newUser.fullName);
@@ -305,13 +305,13 @@ public class CardEdition extends JPanel {
                         public void actionPerformed(ActionEvent a){
                             if(longName.getText().length()>0){
                                 if(shortName.getText().length()>0){
-                                    if(!Maincopy.start){
+                                    if(!Main.start){
                                         savedUsers.add(longName.getText()+","+shortName.getText());
                                     }
                                     CardUser newUser = createUser(longName.getText(),shortName.getText());
                                     newUser.addMouseListener(new MouseAdapter(){
                                         public void mousePressed(MouseEvent m){
-                                            if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                                            if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                                                 addedUsers.remove(newUser);
                                                 listedUsersPanel.remove(newUser);
                                                 model.addElement(newUser.fullName);
@@ -326,7 +326,7 @@ public class CardEdition extends JPanel {
                                     CardUser newUser = createUser(longName.getText(),null);
                                     newUser.addMouseListener(new MouseAdapter(){
                                         public void mousePressed(MouseEvent m){
-                                            if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                                            if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                                                 addedUsers.remove(newUser);
                                                 listedUsersPanel.remove(newUser);
                                                 model.addElement(newUser.fullName);
@@ -336,16 +336,16 @@ public class CardEdition extends JPanel {
                                         }
                                     });
                                 }
-                                if(addedUsers.size()>0&&Maincopy.start&&Maincopy.startStep==3){
-                                    Maincopy.startStep=4;
-                                    Maincopy.stepLabel.setText("Step 4: Add PSDs to User's List");
-                                    Maincopy.detailPane.setText("Now, give yourself some cards.\n Simply drag each psd one at a time into your list.\nThis can be done faster by selecting all the psds at once as if you were selecting files.\nI.e. Select the leftmost psd. Hold shift and select the rightmost psd. Then drag them into the list.");
+                                if(addedUsers.size()>0&&Main.start&&Main.startStep==3){
+                                    Main.startStep=4;
+                                    Main.stepLabel.setText("Step 4: Add PSDs to User's List");
+                                    Main.detailPane.setText("Now, give yourself some cards.\n Simply drag each psd one at a time into your list.\nThis can be done faster by selecting all the psds at once as if you were selecting files.\nI.e. Select the leftmost psd. Hold shift and select the rightmost psd. Then drag them into the list.");
                                     search.setText("");
                                     search.setEnabled(false);
                                     for(PsdButton psd: psds){
                                         psd.setEnabled(true);
                                     }
-                                    Maincopy.tutFrame.pack();
+                                    Main.tutFrame.pack();
                                 }
                             }
                             saveUsers();
@@ -850,25 +850,25 @@ public class CardEdition extends JPanel {
         userPanel.cardList.addPropertyChangeListener(new PropertyChangeListener(){
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(Maincopy.start&&Maincopy.startStep==4){
-                    Maincopy.startStep=5;
-                    Maincopy.stepLabel.setText("Step 5: PSD Settings");
-                    Maincopy.detailPane.setText("If you click on any of the psds at the top, you'll see a settings panel.\nHere is where you can set: \n\"charLimit\", the max length of a name.\n\"altName\",the name of your card on the request site. (Only if you're reading webpage)\n\"replace\",the word or layer to replace in your psds text layers with the requester's name.\nAll of these are set correctly for the moment.\nPress Next when you're ready to move on.");
+                if(Main.start&&Main.startStep==4){
+                    Main.startStep=5;
+                    Main.stepLabel.setText("Step 5: PSD Settings");
+                    Main.detailPane.setText("If you click on any of the psds at the top, you'll see a settings panel.\nHere is where you can set: \n\"charLimit\", the max length of a name.\n\"altName\",the name of your card on the request site. (Only if you're reading webpage)\n\"replace\",the word or layer to replace in your psds text layers with the requester's name.\nAll of these are set correctly for the moment.\nPress Next when you're ready to move on.");
                     JButton nxt = new JButton("Next");
                     nxt.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent a){
-                            Maincopy.startStep=6;
-                            Maincopy.stepLabel.setText("Step 6: Save Script");
-                            Maincopy.detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
-                            Maincopy.tutFrame.remove(nxt);
-                            Maincopy.tutFrame.pack();
-                            Maincopy.tutFrame.validate();
-                            Maincopy.tutFrame.repaint();
+                            Main.startStep=6;
+                            Main.stepLabel.setText("Step 6: Save Script");
+                            Main.detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                            Main.tutFrame.remove(nxt);
+                            Main.tutFrame.pack();
+                            Main.tutFrame.validate();
+                            Main.tutFrame.repaint();
                             
                         }
                     });
-                    Maincopy.tutFrame.add(BorderLayout.SOUTH,nxt);
-                    Maincopy.tutFrame.pack();
+                    Main.tutFrame.add(BorderLayout.SOUTH,nxt);
+                    Main.tutFrame.pack();
                 }
             }
             
@@ -878,7 +878,7 @@ public class CardEdition extends JPanel {
 
         finalPanel.addMouseListener(new MouseAdapter(){
             public void mousePressed(MouseEvent m){
-                if(SwingUtilities.isRightMouseButton(m)&&!Maincopy.start){
+                if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                     addedUsers.remove(finalPanel);
                     listedUsersPanel.remove(finalPanel);
                     frame.validate();
