@@ -1008,7 +1008,7 @@ public class Main
             }
         });
         for(File f : flist){
-            if(f.getName().equals("Photoshop.exe")){
+            if(f.getName().toLowerCase().equals("photoshop.exe")){
                 found_photoshop=true;
                 File photoshopFolder = f.getParentFile();
                 for(File folder: photoshopFolder.listFiles()){
