@@ -34,6 +34,7 @@ for(var group in groups){
                 var replaceWord="Name";
                 var repLayer=false;
                 var replaceLayer="Name";
+                var saveAs="png";
                 for(var psdFind in psds){
                     if(psds[psdFind].name==card){
                         cLimit=psds[psdFind].limit;
@@ -41,6 +42,7 @@ for(var group in groups){
                         replaceWord = psds[psdFind].replaceWord;
                         repLayer = psds[psdFind].repLayer;
                         replaceLayer = psds[psdFind].replaceLayer;
+                        saveAs = psds[psdFind].saveAs;
                         break;
                     }
                 }
@@ -48,7 +50,7 @@ for(var group in groups){
                 if(user_name.length>cLimit&&users[user].names.length>1){
                     user_name=users[user].names[1];
                 }
-                var card_file = new File(user_folder+"/"+user_name+"_"+card.replace(".psd","")+".png");
+                var card_file = new File(user_folder+"/"+user_name+"_"+card.replace(".psd",""));
                 if(!card_file.exists){
                     app.activeDocument = documents.getByName(card);
                     app.activeDocument = app.activeDocument.duplicate();
