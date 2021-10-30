@@ -731,6 +731,58 @@ public class CardEdition extends JPanel {
                                 replaceText.setEnabled(tempBtn.repString);
                             }
 
+                            ButtonGroup saveAsGroup = new ButtonGroup();
+                            JRadioButton savePNG = new JRadioButton("PNG",true);
+                            JRadioButton saveGIF = new JRadioButton("GIF",false);
+                            savePNG.addActionListener(new ActionListener(){
+                                public void actionPerformed(ActionEvent a){
+                                    if(savePNG.isSelected()){
+                                        saveGIF.setSelected(false);
+                                        for(PsdButton psd : psds){
+                                            if(psd.selected){
+                                                psd.saveAs = "png";
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                            
+                            saveGIF.addActionListener(new ActionListener(){
+                                public void actionPerformed(ActionEvent a){
+                                    if(saveGIF.isSelected()){
+                                        savePNG.setSelected(false);
+                                        for(PsdButton psd : psds){
+                                            if(psd.selected){
+                                                psd.saveAs = "gif";
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                            //saveAsGroup.add(savePNG);
+                            //saveAsGroup.add(saveGIF);
+
+                            boolean sameSaveSetting = true;
+                            for(PsdButton psd : psds){
+                                if(psd.selected&&!psd.saveAs.equals(tempBtn.saveAs)){
+                                    sameSaveSetting=false;
+                                }
+                            }
+                            if(!sameSaveSetting){
+                                savePNG.setSelected(false);
+                                saveGIF.setSelected(false);
+                            }
+                            else{
+                                if(tempBtn.saveAs.equals("png")){
+                                    savePNG.setSelected(true);
+                                    saveGIF.setSelected(false);
+                                }
+                                else{
+                                    saveGIF.setSelected(true);
+                                    savePNG.setSelected(false);
+                                }
+                            }
+
                             psdSettingsPanel.add(psdLabel);
                             psdSettingsPanel.add(cLimitText);
                             int numSelected=0;
@@ -751,9 +803,21 @@ public class CardEdition extends JPanel {
                             repLayerBtn.setBackground(psdSettingsPanel.getBackground());
                             replacePanel.add(repStringBtn);
                             replacePanel.add(repLayerBtn);
+
+                            JPanel savePanel = new JPanel(new GridLayout(2,1));
+                            savePanel.setBackground(psdSettingsPanel.getBackground());
+                            TitledBorder saveAsBorder = BorderFactory.createTitledBorder("Save:");
+                            saveAsBorder.setTitleJustification(TitledBorder.CENTER);
+                            savePanel.setBorder(saveAsBorder);
+                            savePNG.setBackground(psdSettingsPanel.getBackground());
+                            saveGIF.setBackground(psdSettingsPanel.getBackground());
+                            savePanel.add(savePNG);
+                            savePanel.add(saveGIF);
+
                             psdSettingsPanel.add(replacePanel);
                             psdSettingsPanel.add(replaceText);
                             psdSettingsPanel.add(replaceLayer);
+                            psdSettingsPanel.add(savePanel);
                             psdSettingsPanel.setVisible(true);
                         }
                         frame.validate();

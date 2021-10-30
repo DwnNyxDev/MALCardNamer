@@ -76,8 +76,14 @@ for(var group in groups){
                             }
                         }
                     }
-                    var pngOpts = new PNGSaveOptions;
-                    app.activeDocument.saveAs(card_file,pngOpts,true,Extension.LOWERCASE);
+                    if(saveAs=="png"){
+                        var pngOpts = new PNGSaveOptions;
+                        app.activeDocument.saveAs(card_file,pngOpts,true,Extension.LOWERCASE);
+                    }
+                    else if(saveAs=="gif"){
+                        var gifOpts = new GIFSaveOptions;
+                        app.activeDocument.saveAs(card_file,gifOpts,true,Extension.LOWERCASE);
+                    }
                     app.activeDocument.close(SaveOptions.DONOTSAVECHANGES);
                 }
             }

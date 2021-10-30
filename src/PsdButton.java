@@ -14,6 +14,7 @@ public class PsdButton extends JButton{
     String replaceLayer;
     boolean repString;
     boolean repLayer;
+    String saveAs;
 
     public PsdButton(File fileIn){
         super(fileIn.getName());
@@ -27,6 +28,7 @@ public class PsdButton extends JButton{
         replaceLayer="Name";
         repString=true;
         repLayer=false;
+        saveAs = "png";
     }
 
     

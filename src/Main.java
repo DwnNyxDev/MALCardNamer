@@ -513,7 +513,7 @@ public class Main
                                     for(int p=0; p<tempED.getPsds().size(); p++){
                                         PsdButton psd = tempED.getPsds().get(p);
                                         String psdInput;
-                                        psdInput = "            '"+p+"' : {'name':'"+psd.name+"','path':'"+psd.file.getAbsolutePath().replace("\\","\\\\")+"','limit':"+psd.charLimit+",'repString':"+psd.repString+",'replaceWord':'"+psd.replaceString+"','repLayer':"+psd.repLayer+",'replaceLayer':'"+psd.replaceLayer+"'";
+                                        psdInput = "            '"+p+"' : {'name':'"+psd.name+"','path':'"+psd.file.getAbsolutePath().replace("\\","\\\\")+"','limit':"+psd.charLimit+",'repString':"+psd.repString+",'replaceWord':'"+psd.replaceString+"','repLayer':"+psd.repLayer+",'replaceLayer':'"+psd.replaceLayer+"','saveAs':'"+psd.saveAs+"'";
                                         psdInput+="},\n";
                                         data.add(psdInput);
                                     }
