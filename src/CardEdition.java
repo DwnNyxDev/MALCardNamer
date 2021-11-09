@@ -922,8 +922,8 @@ public class CardEdition extends JPanel {
                     nxt.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent a){
                             Main.startStep=6;
-                            Main.stepLabel.setText("Step 6: Save Script");
-                            Main.detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them in a specified edition folder, i.e. OMCEdition.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                            Main.stepLabel.setText("Step 6: Name Cards");
+                            Main.detailPane.setText("The last step in this program is to send all this data to photoshop.\nGo to File->Name Cards and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them on your desktop.\nIf you receieve a message saying your script was created and sent successfully, you're done.\nIf you didn't... contact me.");
                             Main.tutFrame.remove(nxt);
                             Main.tutFrame.pack();
                             Main.tutFrame.validate();

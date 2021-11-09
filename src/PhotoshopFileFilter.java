@@ -14,7 +14,7 @@ public class PhotoshopFileFilter extends FileFilter
     }
     
     public boolean accept(File f){
-        if(f.getName().equals("Photoshop.exe")||(f.listFiles()!=null&&f.listFiles().length>0)){
+        if(f.getName().toLowerCase().equals("photoshop.exe")||(f.listFiles()!=null&&f.listFiles().length>0)){
             return true;
         }
         return false;

@@ -382,8 +382,8 @@ public class Main
                                         if(start&&startStep==5){
                                             m12.setEnabled(false);
                                             startStep=6;
-                                            stepLabel.setText("Step 6: Save Script");
-                                            detailPane.setText("The last step in this program is to save your script.\nGo to File->Save Script and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them on your desktop.\nIf you receieve a message saying your script was saved successfully, you're set to move on.\nIf you didn't... contact me.");
+                                            stepLabel.setText("Step 6: Name Cards");
+                                            detailPane.setText("The last step in this program is to send all this data to photoshop.\nGo to File->Name Cards and click on it.\nYou will be prompted to select a save location, the place where your cards will be saved\nI reccomend saving them on your desktop.\nIf you receieve a message saying your script was created and sent successfully, you're done.\nIf you didn't... contact me.");
                                         }
                                     }
                                     else{
@@ -426,7 +426,7 @@ public class Main
             }
         });
         
-        JMenuItem m13 = new JMenuItem("Save Script");
+        JMenuItem m13 = new JMenuItem("Name Cards");
         
         m13.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
@@ -449,7 +449,7 @@ public class Main
                         if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
                             File saveLocation = tempSaver.getSelectedFile();
                             InputStream in = getClass().getResourceAsStream("rename.jsx");
-                            File renameFile = new File(scriptsFolder.getAbsolutePath()+"\\RenameMalCards.jsx");
+                            File renameFile = new File("Scripts\\RenameMalCards.jsx");
                             ArrayList<String> renameContents = new ArrayList<String>();
                             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                             boolean addToArray=true;
@@ -547,25 +547,43 @@ public class Main
                                         JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
                                     }
                                     if(!error){
+                                        
                                         if(start&&startStep==6){
                                             startStep=7;
-                                            stepLabel.setText("Step 7: Run Script in Photoshop");
+                                            stepLabel.setText("Step 7: You're Done!!!");
                                             if(manualTut){
-                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the manual tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                                detailPane.setText("Watch your cards get named.\nThis concludes the manual tutorial.\nPlease consider posting these cards on the OMC Creators Thread on MAL.\n(Just click the button below ^-^)\nClick Done to close the tutorial.");
                                             }
                                             else{
-                                                detailPane.setText("Open Photoshop (if you have multiple photoshops, open the one whose scripts folder you selected).\nGo to File->Scripts->RenameMalCards and click it.\nWatch your cards get named.\nThis concludes the automatic tutorial. Please consider posting these cards on the OMC Creators Thread.\nClick Done to close the tutorial.");
+                                                detailPane.setText("Watch your cards get named.\nThis concludes the automatic tutorial.\nPlease consider posting these cards on the OMC Creators Thread on MAL.\n(Just click the button below ^-^)\nClick Done to close the tutorial.");
                                             }
+                                            JPanel btnPanel = new JPanel(new GridLayout(1,2));
+                                            JButton omcThread = new JButton("Open OMC Thread");
+                                            omcThread.addActionListener(new ActionListener(){
+                                                public void actionPerformed(ActionEvent a){
+                                                    execute("start https://myanimelist.net/forum/?topicid=1957650");
+                                                }
+                                            });
                                             JButton done = new JButton("Done");
                                             done.addActionListener(new ActionListener(){
                                                 public void actionPerformed(ActionEvent a){
                                                     tutFrame.dispose();
                                                 }
                                             });
-                                            tutFrame.add(BorderLayout.SOUTH,done);
+                                            btnPanel.add(omcThread);
+                                            btnPanel.add(done);
+                                            tutFrame.add(BorderLayout.SOUTH,btnPanel);
                                             tutFrame.pack();
                                         }
-                                        JOptionPane.showMessageDialog(frame, "Script saved successfully.", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
+                                        try{
+                                            String[] commands = new String[]{photoFile.getAbsolutePath(),renameFile.getAbsolutePath()};
+                                            Runtime.getRuntime().exec(commands);
+                                            JOptionPane.showMessageDialog(frame, "Script created and sent to photoshop successfully", "Script Notification",JOptionPane.INFORMATION_MESSAGE);
+                                        }
+                                        catch(IOException e){
+                                            error=true;
+                                            JOptionPane.showMessageDialog(frame, e, "RunningScriptError", JOptionPane.ERROR_MESSAGE);
+                                        }
                                     }
                                 }
                             }
@@ -804,7 +822,7 @@ public class Main
                     tutFrame.add(BorderLayout.CENTER,detailPane);
                     tutFrame.pack();
                     tutFrame.setLocationRelativeTo(frame);
-                    tutFrame.setLocation(frame.getWidth()-tutFrame.getContentPane().getWidth(),0);
+                    tutFrame.setLocation(frame.getWidth()-(tutFrame.getContentPane().getWidth()/2),0);
                     tutFrame.setVisible(true);
                     tutFrame.addWindowListener(new WindowAdapter(){
                         public void windowClosing(WindowEvent w){
@@ -847,7 +865,7 @@ public class Main
            if(pathReader.hasNextLine()){
                String path = pathReader.nextLine();
                pathReader.close();
-               if(!path.endsWith("Scripts")){
+               if(!path.toLowerCase().endsWith("photoshop.exe")){
                    found_photoshop=false;
                    photoFile=null;
                    getPhotoFile();
@@ -856,7 +874,7 @@ public class Main
                     }
                 }
                 else{
-                    scriptsFolder=new File(path);
+                    photoFile=new File(path);
                 }
             }
             else{
@@ -890,7 +908,7 @@ public class Main
             final JDialog dialog = new JDialog(frame,"Path Selector",true);
             
             JTextField path = new JTextField(40);
-            TitledBorder pathBorder = BorderFactory.createTitledBorder("Please select the path to your Photoshop scripts folder.");
+            TitledBorder pathBorder = BorderFactory.createTitledBorder("Please select the path to your photoshop exectuable.");
             pathBorder.setTitleJustification(TitledBorder.CENTER);
             path.setBorder(pathBorder);
             path.setBackground(dialog.getBackground());
@@ -904,7 +922,7 @@ public class Main
                     try{
                         saveData.createNewFile();
                         FileWriter pathWriter = new FileWriter(saveData);
-                        pathWriter.write(scriptsFolder.getAbsolutePath());
+                        pathWriter.write(photoFile.getAbsolutePath());
                         pathWriter.close();
                     } catch(IOException e){
                         System.out.println("Something went wrong >-<");
@@ -917,20 +935,20 @@ public class Main
 
                 }
                 public void insertUpdate(DocumentEvent d){
-                    if(path.getText().endsWith("Scripts")){
+                    if(path.getText().toLowerCase().endsWith("photoshop.exe")){
                         done.setEnabled(true);
-                        scriptsFolder=new File(path.getText());
+                        photoFile=new File(path.getText());
                     }
-                    else if(scriptsFolder==null){
+                    else{
                         done.setEnabled(false);
                     }
                 }
                 public void removeUpdate(DocumentEvent d){
-                    if(path.getText().endsWith("Scripts")){
+                    if(path.getText().toLowerCase().endsWith("photoshop.exe")){
                         done.setEnabled(true);
-                        scriptsFolder=new File(path.getText());
+                        photoFile=new File(path.getText());
                     }
-                    else if(scriptsFolder==null){
+                    else{
                         done.setEnabled(false);
                     }
                 }
@@ -950,20 +968,20 @@ public class Main
             select.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent a){
                     JFileChooser pathChooser = new JFileChooser();
-                    if(scriptsFolder!=null){
-                        if(scriptsFolder.getParentFile()!=null){
-                            pathChooser.setCurrentDirectory(scriptsFolder.getParentFile().getParentFile());
+                    if(photoFile!=null){
+                        if(photoFile.getParentFile()!=null){
+                            pathChooser.setCurrentDirectory(photoFile.getParentFile().getParentFile());
                         }
                     }
-                    pathChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    pathChooser.setFileFilter(new PhotoshopFileFilter());
                     if(pathChooser.showOpenDialog(dialog)==JFileChooser.APPROVE_OPTION){
                         String getPath = pathChooser.getSelectedFile().getAbsolutePath();
                         File f = new File(getPath);
-                        if(f.getName().equals("Scripts")){
+                        if(f.getName().toLowerCase().equals("photoshop.exe")){
                             path.setText(getPath);
-                            scriptsFolder=f;
+                            photoFile=f;
+                            done.setEnabled(true);
                         }
-                        done.setEnabled(true);
                     };
                 }
             });
@@ -1010,18 +1028,9 @@ public class Main
         for(File f : flist){
             if(f.getName().toLowerCase().equals("photoshop.exe")){
                 found_photoshop=true;
-                File photoshopFolder = f.getParentFile();
-                for(File folder: photoshopFolder.listFiles()){
-                    if(folder.getName().equals("Presets")){
-                        for(File f2: folder.listFiles()){
-                            if(f2.getName().equals("Scripts")){
-                                scriptsFolder=f2;
-                                tf.setText(scriptsFolder.getAbsolutePath());
-                                doneBtn.setEnabled(true);
-                            }
-                        }
-                    }
-                }
+                photoFile = f;
+                tf.setText(f.getAbsolutePath());
+                doneBtn.setEnabled(true);
             }
         }
         if(!found_photoshop){
@@ -1041,6 +1050,34 @@ public class Main
             for(Thread t: threadList){
                 t.start();
             }
+        }
+    }
+
+    private static boolean execute(String cmd){
+        try{
+            Runtime rt = Runtime.getRuntime();
+            Process pr = rt.exec("cmd /c "+cmd);
+
+            new Thread(new Runnable() {
+                    public void run() {
+                        BufferedReader input = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+                        String line = null;
+
+                        try {
+                            while ((line = input.readLine()) != null){
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+
+            pr.waitFor();
+            return true;
+        }
+
+        catch(Exception e){
+            return false;
         }
     }
 }
