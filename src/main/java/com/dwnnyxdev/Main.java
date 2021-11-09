@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionListener;
@@ -33,15 +33,30 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 
+import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
+
+import java.nio.file.FileSystem;
+
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GHAsset;
+import org.kohsuke.github.GHRelease;
+import org.kohsuke.github.GHRepository;
+import org.apache.commons.io.FileUtils;
+
 
 /**
  * Write a description of class main here.
  *
  * @author Vandell Vatel
- * @version v1.3.0
+ * @version v1.4.3
  */
 public class Main
 {
+    private static String version = "v1.4.3";
     private static JFrame frame;
     private static ArrayList<PsdButton> psds = new ArrayList<PsdButton>();
     private static File photoFile;
@@ -93,27 +108,27 @@ public class Main
         dragDropPanel.setBounds(0,0,frame.getWidth(),frame.getHeight());
 
         JMenuBar mb = new JMenuBar();
-        JMenu m1 = new JMenu("File");
-        JMenuItem m11= new JMenuItem("Open PSDs");
-        JMenuItem m12= new JMenuItem("Read Webpage");
+        final JMenu m1 = new JMenu("File");
+        final JMenuItem m11= new JMenuItem("Open PSDs");
+        final JMenuItem m12= new JMenuItem("Read Webpage");
         
         m12.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
                 if(selectedGroup.getPsds().size()>0){
                     final JDialog dialog = new JDialog(frame,"Topic Contents",true);
-                    JTextField cln = new JTextField("Cards",15);
+                    final JTextField cln = new JTextField("Cards",15);
                     cln.setHorizontalAlignment(JTextField.CENTER);
                     TitledBorder clnBorder = BorderFactory.createTitledBorder("Card Line Name");
                     clnBorder.setTitleJustification(TitledBorder.CENTER);
                     cln.setBorder(clnBorder);
                     cln.setBackground(dialog.getBackground());
-                    JTextArea contents = new JTextArea(40,80);
+                    final JTextArea contents = new JTextArea(40,80);
                     TitledBorder contentsBorder = BorderFactory.createTitledBorder("Topic Page Contents");
                     contentsBorder.setTitleJustification(TitledBorder.CENTER);
-                    JScrollPane scrollPane = new JScrollPane(contents);
+                    final JScrollPane scrollPane = new JScrollPane(contents);
                     scrollPane.setBorder(contentsBorder);
-                    JButton done = new JButton("Done");
-                    JButton cancel = new JButton("Cancel");
+                    final JButton done = new JButton("Done");
+                    final JButton cancel = new JButton("Cancel");
 
                     if(start&&startStep==3&&!manualTut){
                         startStep=4;
@@ -179,7 +194,7 @@ public class Main
                                 CardUser newUser=null;
                                 String cardMaker = cln.getText();
                                 if(cardMaker!=null&&cardMaker.length()>0){
-                                    for(var i=0; i<contents.getText().split("\\n").length;i++){
+                                    for(int i=0; i<contents.getText().split("\\n").length;i++){
                                         String nextLine = contents.getText().split("\\n")[i];
                                         if(nextLine.contains("Posts:")){
                                             searchForNames=true;
@@ -426,7 +441,7 @@ public class Main
             }
         });
         
-        JMenuItem m13 = new JMenuItem("Name Cards");
+        final JMenuItem m13 = new JMenuItem("Name Cards");
         
         m13.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
@@ -597,9 +612,9 @@ public class Main
         m1.add(m12);
         m1.add(m13);
 
-        JMenu m2 = new JMenu("Editions");
-        JMenuItem m21 = new JMenuItem("Add Edition");
-        JPanel edPanel = new JPanel();
+        final JMenu m2 = new JMenu("Editions");
+        final JMenuItem m21 = new JMenuItem("Add Edition");
+        final JPanel edPanel = new JPanel();
         edPanel.setLayout(new BoxLayout(edPanel, BoxLayout.PAGE_AXIS));
         m21.addActionListener(new ActionListener(){
             @Override
@@ -614,12 +629,12 @@ public class Main
                         }
                     }
                     if(!nameExists){
-                        CardEdition newEdition = new CardEdition(frame,edName);
+                        final CardEdition newEdition = new CardEdition(frame,edName);
                         editions.add(newEdition);
                         tPane.add(newEdition,edName);
                         tPane.setSelectedComponent(newEdition);
                         groupNum++;
-                        JTextField edField = new JTextField(edName);
+                        final JTextField edField = new JTextField(edName);
                         edField.addFocusListener(new FocusListener(){
                             @Override
                             public void focusGained(FocusEvent e) {
@@ -675,15 +690,53 @@ public class Main
         m2.add(edPanel);
         m2.add(m21);
         
-        JMenu m3 = new JMenu("Help");
-        JMenuItem m31 = new JMenuItem("Tutorial");
-
+        final JMenu m3 = new JMenu("Help");
+        final JMenuItem m31 = new JMenuItem("Tutorial");
         m3.add(m31);
+
+        final JMenu m4= new JMenu("Version");
+        final JLabel m41 = new JLabel("Current Version: "+version);
+        final JMenuItem m42 = new JMenuItem("Check for New Version");
+        m42.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                try{
+                    GitHub github = GitHub.connectAnonymously();
+                    GHRepository repo = github.getRepository("DwnNyxDev/MALCardNamer");
+                    final GHRelease latestRelease = repo.getLatestRelease();
+                    String latestVersion = latestRelease.getTagName();
+                    if(latestVersion.equals(version)){
+                        JOptionPane.showMessageDialog(frame, "You have the latest version of this program", "Up to Date", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else{
+                        Object[] options = {"Catch me up","Maybe later"};
+                        if(JOptionPane.showOptionDialog(frame, "You currently have version: "+version+"\nThe latest version is: "+latestVersion+"\nWould you like to update to the latest version?", "Update Found", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,options,null)==JOptionPane.YES_OPTION){
+                            for(GHAsset asset : latestRelease.listAssets()){
+                                if(asset.getContentType().equals("application/x-zip-compressed")){
+                                    File zipFile = new File(asset.getName());
+                                    FileUtils.copyURLToFile(new URL(asset.getBrowserDownloadUrl()), zipFile);
+                                    FileSystem fileSystem = FileSystems.newFileSystem(zipFile.toPath(),null);
+                                    File jarFile = new File("MALCardNamer"+latestVersion+".jar");
+                                    Files.copy(fileSystem.getPath("MALCardNamer\\MALCardNamer.jar"),jarFile.toPath(),StandardCopyOption.REPLACE_EXISTING);
+                                    zipFile.delete();
+                                    System.exit(0);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch(IOException e){
+                    JOptionPane.showMessageDialog(frame, e, "FindingLatestVersionError", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        m4.add(m41);
+        m4.add(m42);
+
         mb.add(m1);
         mb.add(m2);
         mb.add(m3);
-
-    
+        mb.add(m4);
 
         frame.add(BorderLayout.NORTH,mb);
 
@@ -717,7 +770,7 @@ public class Main
                             }
                         }
                     }
-                    ArrayList<File> chosenFiles = new ArrayList<File>();
+                    final ArrayList<File> chosenFiles = new ArrayList<File>();
                     psdSelecter.addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY,new PropertyChangeListener(){
                         public void propertyChange(PropertyChangeEvent pc){
                             List<File> selected = Arrays.asList(psdSelecter.getSelectedFiles());
@@ -907,7 +960,7 @@ public class Main
         if(returnVal==JOptionPane.YES_OPTION){
             final JDialog dialog = new JDialog(frame,"Path Selector",true);
             
-            JTextField path = new JTextField(40);
+            final JTextField path = new JTextField(40);
             TitledBorder pathBorder = BorderFactory.createTitledBorder("Please select the path to your photoshop exectuable.");
             pathBorder.setTitleJustification(TitledBorder.CENTER);
             path.setBorder(pathBorder);
@@ -915,7 +968,7 @@ public class Main
             path.setEditable(true);
             path.setHorizontalAlignment(JTextField.CENTER);
 
-            JButton done = new JButton("Done");
+            final JButton done = new JButton("Done");
             done.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent a){
                     dialog.dispose();
@@ -1016,7 +1069,7 @@ public class Main
         }
     }
     
-    private static void searchPhotoshop(File directory, JTextField tf,JButton doneBtn){
+    private static void searchPhotoshop(File directory, final JTextField tf,final JButton doneBtn){
         File[] flist = directory.listFiles(new FileFilter(){
             public boolean accept(File pathname){
                 if(pathname.getName().endsWith(".exe")){
@@ -1035,7 +1088,7 @@ public class Main
         }
         if(!found_photoshop){
             ArrayList<Thread> threadList = new ArrayList<Thread>();
-            for(File f : directory.listFiles()){
+            for(final File f : directory.listFiles()){
                 if(f.listFiles()!=null&&f.listFiles().length>0){
                     threadList.add(new Thread(new Runnable(){
                         public void run(){
@@ -1056,7 +1109,7 @@ public class Main
     private static boolean execute(String cmd){
         try{
             Runtime rt = Runtime.getRuntime();
-            Process pr = rt.exec("cmd /c "+cmd);
+            final Process pr = rt.exec("cmd /c "+cmd);
 
             new Thread(new Runnable() {
                     public void run() {

@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import javax.swing.JButton;
 import java.io.*;
 

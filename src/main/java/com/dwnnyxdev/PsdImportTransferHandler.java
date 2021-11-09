@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import java.awt.Component;
 
 import javax.swing.TransferHandler;

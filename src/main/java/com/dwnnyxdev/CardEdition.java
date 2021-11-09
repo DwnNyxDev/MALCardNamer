@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionListener;
@@ -80,7 +80,7 @@ public class CardEdition extends JPanel {
 
         JLabel psdOpenLabel = new JLabel(new ImageIcon(new ImageIcon("OpenPsds.png").getImage().getScaledInstance((int)(frame.getWidth()*.25), -1, Image.SCALE_SMOOTH)));
 
-        JPanel contentPanel = new JPanel(new BorderLayout());
+        final JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBounds(0,0,frame.getWidth(),frame.getHeight());
         psdPanel = new JPanel(new GridLayout(2,1));
         psdPanel.setBackground(frame.getBackground().darker());
@@ -89,11 +89,11 @@ public class CardEdition extends JPanel {
         //psdSettingsPanel.setPreferredSize(new Dimension(frame.getWidth(),(int)(frame.getHeight()*.12)));
         psdSettingsPanel.setBackground(psdPanel.getBackground());
         
-        JTextField search = new JTextField("Search for a saved user or add a new one here");
+        final JTextField search = new JTextField("Search for a saved user or add a new one here");
         //search.setSize(new Dimension(userPanel.getWidth(),(int)(userPanel.getHeight()*.4)));
-        JPanel searchPanel = new JPanel(new BorderLayout());
+        final JPanel searchPanel = new JPanel(new BorderLayout());
         searchPanel.add(BorderLayout.NORTH,search);
-        File userFile = new File("savedUsers.txt");
+        final File userFile = new File("savedUsers.txt");
         try{
             savedUsers.clear();
             userFile.createNewFile();
@@ -106,9 +106,9 @@ public class CardEdition extends JPanel {
         } catch(Exception e){
             
         }
-        DefaultListModel<String> model = new DefaultListModel<>();
+        final DefaultListModel<String> model = new DefaultListModel<>();
         
-        JList<String> searchList = new JList<String>(model);
+        final JList<String> searchList = new JList<String>(model);
         if(Main.start){
             searchList.setEnabled(false);
             if(Main.manualTut){
@@ -118,7 +118,7 @@ public class CardEdition extends JPanel {
                 search.setEnabled(false);
             }
         }
-        JScrollPane nameScroller = new JScrollPane(searchList);
+        final JScrollPane nameScroller = new JScrollPane(searchList);
         nameScroller.setVisible(false);
         searchList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         for(String user : savedUsers){
@@ -154,7 +154,7 @@ public class CardEdition extends JPanel {
                     if(searchText.indexOf(",")!=-1){
                         String longName = searchText.substring(0,searchText.indexOf(","));
                         String shortName = searchText.substring(searchText.indexOf(",")+1);
-                        CardUser newUser = createUser(longName,shortName);
+                        final CardUser newUser = createUser(longName,shortName);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
                                 if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
@@ -169,7 +169,7 @@ public class CardEdition extends JPanel {
                     }
                     else{
                         String longName = searchText;
-                        CardUser newUser = createUser(longName,null);
+                        final CardUser newUser = createUser(longName,null);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
                                 if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
@@ -249,7 +249,7 @@ public class CardEdition extends JPanel {
                     if(searchText.indexOf(",")!=-1){
                         String longName = searchText.substring(0,searchText.indexOf(","));
                         String shortName = searchText.substring(searchText.indexOf(",")+1);
-                        CardUser newUser = createUser(longName,shortName);
+                        final CardUser newUser = createUser(longName,shortName);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
                                 if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
@@ -264,7 +264,7 @@ public class CardEdition extends JPanel {
                     }
                     else{
                         String longName = searchText;
-                        CardUser newUser = createUser(longName,null);
+                        final CardUser newUser = createUser(longName,null);
                         newUser.addMouseListener(new MouseAdapter(){
                             public void mousePressed(MouseEvent m){
                                 if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
@@ -282,12 +282,12 @@ public class CardEdition extends JPanel {
                 else{
                     final JDialog newUserDialog = new JDialog(frame,"New User",true);
                     //newUserDialog.setPreferredSize(new Dimension((int)(frame.getWidth()*.4),(int)(frame.getHeight()*.4)));
-                    JTextField longName = new JTextField();
+                    final JTextField longName = new JTextField();
                     TitledBorder longBorder = BorderFactory.createTitledBorder("Default");
                     longBorder.setTitleJustification(TitledBorder.CENTER);
                     longName.setBorder(longBorder);
                     longName.setHorizontalAlignment(JTextField.CENTER);
-                    JTextField shortName = new JTextField();
+                    final JTextField shortName = new JTextField();
                     TitledBorder shortBorder = BorderFactory.createTitledBorder("Alternative");
                     shortBorder.setTitleJustification(TitledBorder.CENTER);
                     shortName.setBorder(shortBorder);
@@ -300,7 +300,7 @@ public class CardEdition extends JPanel {
                     else{
                         longName.setText(searchText);
                     }
-                    JButton done = new JButton("Done");
+                    final JButton done = new JButton("Done");
                     done.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent a){
                             if(longName.getText().length()>0){
@@ -308,7 +308,7 @@ public class CardEdition extends JPanel {
                                     if(!Main.start){
                                         savedUsers.add(longName.getText()+","+shortName.getText());
                                     }
-                                    CardUser newUser = createUser(longName.getText(),shortName.getText());
+                                    final CardUser newUser = createUser(longName.getText(),shortName.getText());
                                     newUser.addMouseListener(new MouseAdapter(){
                                         public void mousePressed(MouseEvent m){
                                             if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
@@ -323,7 +323,7 @@ public class CardEdition extends JPanel {
                                 }
                                 else{
                                     savedUsers.add(longName.getText());
-                                    CardUser newUser = createUser(longName.getText(),null);
+                                    final CardUser newUser = createUser(longName.getText(),null);
                                     newUser.addMouseListener(new MouseAdapter(){
                                         public void mousePressed(MouseEvent m){
                                             if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
@@ -428,7 +428,7 @@ public class CardEdition extends JPanel {
 
     public void addPsds(PsdButton[] newPsds){
         for(int i=0; i<newPsds.length; i++){
-            PsdButton tempBtn = newPsds[i];
+            final PsdButton tempBtn = newPsds[i];
             boolean alreadyExists=false;
             for(PsdButton psd: psds){
                 if(psd.name.equals(tempBtn.name)){
@@ -512,7 +512,7 @@ public class CardEdition extends JPanel {
 
                             TitledBorder textBorder = BorderFactory.createTitledBorder("charLimit");
                             textBorder.setTitleJustification(TitledBorder.CENTER);
-                            JTextField cLimitText = new JTextField(9);
+                            final JTextField cLimitText = new JTextField(9);
                             cLimitText.setBackground(psdSettingsPanel.getBackground());
                             cLimitText.setHorizontalAlignment(JTextField.CENTER);
                             cLimitText.setBorder(textBorder);
@@ -556,7 +556,7 @@ public class CardEdition extends JPanel {
 
                             textBorder = BorderFactory.createTitledBorder("altName");
                             textBorder.setTitleJustification(TitledBorder.CENTER);
-                            JTextField altNameText = new JTextField(9);
+                            final JTextField altNameText = new JTextField(9);
                             altNameText.setBackground(psdSettingsPanel.getBackground());
                             altNameText.setHorizontalAlignment(JTextField.CENTER);
                             altNameText.setBorder(textBorder);
@@ -573,7 +573,7 @@ public class CardEdition extends JPanel {
 
                             textBorder = BorderFactory.createTitledBorder("Replace Text");
                             textBorder.setTitleJustification(TitledBorder.CENTER);
-                            JTextField replaceText = new JTextField(9);
+                            final JTextField replaceText = new JTextField(9);
                             replaceText.setBackground(psdSettingsPanel.getBackground());
                             replaceText.setHorizontalAlignment(JTextField.CENTER);
                             replaceText.setBorder(textBorder);
@@ -617,7 +617,7 @@ public class CardEdition extends JPanel {
 
                             textBorder = BorderFactory.createTitledBorder("Replace Layer");
                             textBorder.setTitleJustification(TitledBorder.CENTER);
-                            JTextField replaceLayer = new JTextField(9);
+                            final JTextField replaceLayer = new JTextField(9);
                             replaceLayer.setBackground(psdSettingsPanel.getBackground());
                             replaceLayer.setHorizontalAlignment(JTextField.CENTER);
                             replaceLayer.setBorder(textBorder);
@@ -659,7 +659,7 @@ public class CardEdition extends JPanel {
                                 }
                             });
 
-                            JRadioButton repStringBtn = new JRadioButton("Text",true);
+                            final JRadioButton repStringBtn = new JRadioButton("Text",true);
                             repStringBtn.addActionListener(new ActionListener(){
                                 public void actionPerformed(ActionEvent a) {
                                     if(repStringBtn.isSelected()){
@@ -680,7 +680,7 @@ public class CardEdition extends JPanel {
                                     }
                                 }
                             });
-                            JRadioButton repLayerBtn = new JRadioButton("Layer",false);
+                            final JRadioButton repLayerBtn = new JRadioButton("Layer",false);
                             repLayerBtn.addActionListener(new ActionListener(){
                                 public void actionPerformed(ActionEvent a) {
                                     if(repLayerBtn.isSelected()){
@@ -732,8 +732,8 @@ public class CardEdition extends JPanel {
                             }
 
                             ButtonGroup saveAsGroup = new ButtonGroup();
-                            JRadioButton savePNG = new JRadioButton("PNG",true);
-                            JRadioButton saveGIF = new JRadioButton("GIF",false);
+                            final JRadioButton savePNG = new JRadioButton("PNG",true);
+                            final JRadioButton saveGIF = new JRadioButton("GIF",false);
                             savePNG.addActionListener(new ActionListener(){
                                 public void actionPerformed(ActionEvent a){
                                     if(savePNG.isSelected()){
@@ -918,7 +918,7 @@ public class CardEdition extends JPanel {
                     Main.startStep=5;
                     Main.stepLabel.setText("Step 5: PSD Settings");
                     Main.detailPane.setText("If you click on any of the psds at the top, you'll see a settings panel.\nHere is where you can set: \n\"charLimit\", the max length of a name.\n\"altName\",the name of your card on the request site. (Only if you're reading webpage)\n\"replace\",the word or layer to replace in your psds text layers with the requester's name.\nAll of these are set correctly for the moment.\nPress Next when you're ready to move on.");
-                    JButton nxt = new JButton("Next");
+                    final JButton nxt = new JButton("Next");
                     nxt.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent a){
                             Main.startStep=6;

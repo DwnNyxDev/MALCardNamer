@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import java.io.File;
 import javax.swing.filechooser.FileFilter;
 /**

@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import javax.swing.JList;
 import javax.swing.ListModel;
 

@@ -1,4 +1,4 @@
-package src;
+package com.dwnnyxdev;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 import java.awt.dnd.DnDConstants;
