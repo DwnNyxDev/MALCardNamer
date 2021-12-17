@@ -61,6 +61,7 @@ public class Main
     private static ArrayList<PsdButton> psds = new ArrayList<PsdButton>();
     private static File photoFile;
     private static boolean found_photoshop;
+    private static boolean photoshop_searching;
     private static File scriptsFolder;
     private static File saveData;
     private static File lastOpenLocation;
@@ -81,6 +82,7 @@ public class Main
         double screenHeight = screenSize.getHeight();
         double screenWidth = screenSize.getWidth();
         found_photoshop=false;
+        photoshop_searching = false;
 
         start = false;
         startStep=1;
@@ -661,7 +663,7 @@ public class Main
                             }
                         });
                         edField.addMouseListener(new MouseAdapter(){
-                            public void mousePressed(MouseEvent m){
+                            public void mousePressed(java.awt.event.MouseEvent m){
                                 if(SwingUtilities.isRightMouseButton(m)){
                                     tPane.remove(newEdition);
                                     edPanel.remove(edField);
@@ -733,10 +735,36 @@ public class Main
         m4.add(m41);
         m4.add(m42);
 
+        final JMenu m5 = new JMenu("Photoshop");
+        final JLabel m51 = new JLabel("aaa");
+        m51.setPreferredSize(new Dimension(400,(int)m51.getPreferredSize().getHeight()));
+        m51.addMouseListener(new MouseAdapter(){
+            public void mouseEntered(MouseEvent e){
+                if(photoFile!=null){
+                    m51.setText(photoFile.getParentFile().getAbsolutePath());
+                }
+            }
+            public void mouseExited(MouseEvent e){
+                if(photoFile!=null){
+                    m51.setText(photoFile.getParentFile().getName());
+                }
+            }
+        });
+        final JButton m52 = new JButton("Change Photoshop Program");
+        m52.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                getPhotoFile();
+                m51.setText(photoFile.getParentFile().getName());
+            }
+        });
+        m5.add(m51);
+        m5.add(m52);
+
         mb.add(m1);
         mb.add(m2);
         mb.add(m3);
         mb.add(m4);
+        mb.add(m5);
 
         frame.add(BorderLayout.NORTH,mb);
 
@@ -855,6 +883,8 @@ public class Main
                     m1.setEnabled(false);
                     m12.setEnabled(false);
                     m3.setEnabled(false);
+                    m4.setEnabled(false);
+                    m5.setEnabled(false);
                     psds.clear();
                     frame.requestFocusInWindow();
                     tutFrame = new JFrame("Tutorial Window");
@@ -886,6 +916,8 @@ public class Main
                             m13.setEnabled(true);
                             m2.setEnabled(true);
                             m3.setEnabled(true);
+                            m4.setEnabled(true);
+                            m5.setEnabled(true);
                             m1.setEnabled(true);
                             tPane.removeAll();
                             edPanel.removeAll();
@@ -899,6 +931,8 @@ public class Main
                             m13.setEnabled(true);
                             m2.setEnabled(true);
                             m3.setEnabled(true);
+                            m4.setEnabled(true);
+                            m5.setEnabled(true);
                             m1.setEnabled(true);
                             tPane.removeAll();
                             edPanel.removeAll();
@@ -939,10 +973,12 @@ public class Main
                     a.actionPerformed(new ActionEvent(Main.class,ActionEvent.ACTION_PERFORMED,null));  
                 }
             }
+            m51.setText(photoFile.getParentFile().getName());
 
         } catch(IOException e){
             System.out.println("Something went wrong. >-<");
-        }     
+        }
+    
     }
 
     private static boolean isNumber(String s){
@@ -956,8 +992,6 @@ public class Main
     }
     
     private static void getPhotoFile(){
-        int returnVal = JOptionPane.showConfirmDialog(frame, "Are you using Adobe Photoshop?", "Initial Setup", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if(returnVal==JOptionPane.YES_OPTION){
             final JDialog dialog = new JDialog(frame,"Path Selector",true);
             
             final JTextField path = new JTextField(40);
@@ -969,6 +1003,7 @@ public class Main
             path.setHorizontalAlignment(JTextField.CENTER);
 
             final JButton done = new JButton("Done");
+            final JButton select = new JButton("Select");
             done.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent a){
                     dialog.dispose();
@@ -1007,17 +1042,56 @@ public class Main
                 }
             });
             
-            JButton test = new JButton("Search");
+            final JButton test = new JButton("Search");
             test.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent a){
+                    test.setText("Searching...");
+                    test.setEnabled(false);
+                    select.setEnabled(false);
+                    done.setEnabled(false);
                     String currDir = System.getProperty("user.dir");
                     String startDir = currDir.substring(0, currDir.indexOf("\\")+1);
                     File directory = new File(startDir);
-                    searchPhotoshop(directory,path,done);
+                    final ArrayList<File> searchResults = new ArrayList<>();
+                    photoshop_searching=true;
+                    searchPhotoshop(directory,path,done,searchResults);
+                    ActionListener al = new ActionListener(){
+                        public void actionPerformed(ActionEvent ae){
+                            test.setText("Search");
+                            photoshop_searching=false;
+                            if(searchResults.size()==0){
+                                JOptionPane.showMessageDialog(frame, "Couldn't find any photoshop apps on your computer", "FileSearchingError", JOptionPane.ERROR_MESSAGE);
+                            }
+                            else if(searchResults.size()==1){
+                                photoFile = searchResults.get(0);
+                                path.setText(photoFile.getAbsolutePath());
+                                done.setEnabled(true);
+                            }
+                            else{
+                                ArrayList<String> options = new ArrayList<>();
+                                for(int i=0; i<searchResults.size(); i++){
+                                    options.add(searchResults.get(i).getParentFile().getName());
+                                }
+                                String results = (String) JOptionPane.showInputDialog(frame, "Found multiple photoshop apps on your computer. Please select the one you want to use with this program.", "PhotoshopSelector", JOptionPane.QUESTION_MESSAGE, null, options.toArray(), options.toArray()[0]);
+                                if(results!= null){
+                                    photoFile = searchResults.get(options.indexOf(results));
+                                    path.setText(photoFile.getAbsolutePath());
+                                    done.setEnabled(true);
+                                }
+                            }
+                            test.setEnabled(true);
+                            select.setEnabled(true);
+                            if(photoFile!=null){
+                                done.setEnabled(true);
+                            }
+                        }
+                    };
+                    Timer timer = new Timer(3000, al);
+                    timer.setRepeats(false);
+                    timer.start();
                 }
             });
 
-            JButton select = new JButton("Select");
             select.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent a){
                     JFileChooser pathChooser = new JFileChooser();
@@ -1054,7 +1128,9 @@ public class Main
 
             dialog.addWindowListener(new WindowAdapter(){
                 public void windowClosing(WindowEvent w){
-                    System.exit(0);
+                    if(photoFile==null){
+                        System.exit(0);
+                    }
                 }
             });
             
@@ -1062,14 +1138,9 @@ public class Main
             dialog.setIconImage(new ImageIcon("Photoshop_Logo.png").getImage());
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-        }
-        else{
-            JOptionPane.showMessageDialog(frame,"Then get it.","No Photoshop Error",JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        }
     }
     
-    private static void searchPhotoshop(File directory, final JTextField tf,final JButton doneBtn){
+    private static void searchPhotoshop(File directory, final JTextField tf,final JButton doneBtn, final ArrayList<File> searchResults){
         File[] flist = directory.listFiles(new FileFilter(){
             public boolean accept(File pathname){
                 if(pathname.getName().endsWith(".exe")){
@@ -1080,20 +1151,25 @@ public class Main
         });
         for(File f : flist){
             if(f.getName().toLowerCase().equals("photoshop.exe")){
-                found_photoshop=true;
-                photoFile = f;
-                tf.setText(f.getAbsolutePath());
-                doneBtn.setEnabled(true);
+                boolean containsAlready = false;
+                for(File prevFile: searchResults){
+                    if(f.getAbsolutePath().equals(prevFile.getAbsolutePath())){
+                        containsAlready=true;
+                    };
+                }
+                if(!containsAlready){
+                    searchResults.add(f);
+                }
             }
         }
-        if(!found_photoshop){
+        if(photoshop_searching){
             ArrayList<Thread> threadList = new ArrayList<Thread>();
             for(final File f : directory.listFiles()){
                 if(f.listFiles()!=null&&f.listFiles().length>0){
                     threadList.add(new Thread(new Runnable(){
                         public void run(){
-                            if(!found_photoshop){
-                                searchPhotoshop(f,tf,doneBtn);
+                            if(photoshop_searching){
+                                searchPhotoshop(f,tf,doneBtn,searchResults);
                             }
                         }
 
