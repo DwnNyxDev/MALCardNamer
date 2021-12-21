@@ -530,6 +530,22 @@ public class CardEdition extends JPanel {
                                     cLimitText.setText("");
                                 }
                                 public void focusLost(FocusEvent f){
+                                    boolean sameLimit=true;
+                                    for(PsdButton psd : psds){
+                                        if(psd.selected&&psd.charLimit!=tempBtn.charLimit){
+                                            sameLimit=false;
+                                        }
+                                    }
+                                    if(sameLimit){
+                                        cLimitText.setText(String.valueOf(tempBtn.charLimit));
+                                    }
+                                    else{
+                                        cLimitText.setText("");
+                                    }
+                                }
+                            });
+                            cLimitText.addActionListener(new ActionListener(){
+                                public void actionPerformed(ActionEvent a){
                                     try{
                                         int cLimit = Integer.valueOf(cLimitText.getText());
                                         for(PsdButton psd : psds){
@@ -551,6 +567,7 @@ public class CardEdition extends JPanel {
                                             cLimitText.setText("");
                                         }
                                     }
+                                    frame.requestFocusInWindow();
                                 }
                             });
 
@@ -591,6 +608,22 @@ public class CardEdition extends JPanel {
                                     replaceText.setText("");
                                 }
                                 public void focusLost(FocusEvent f){
+                                    boolean sameReplace = true;
+                                    for(PsdButton psd : psds){
+                                        if(psd.selected&&!psd.replaceString.equals(tempBtn.replaceString)){
+                                            sameReplace=false;
+                                        }
+                                    }
+                                    if(sameReplace){
+                                        replaceText.setText(tempBtn.replaceString);
+                                    }
+                                    else{
+                                        replaceText.setText("");
+                                    }
+                                }
+                            });
+                            replaceText.addActionListener(new ActionListener(){
+                                public void actionPerformed(ActionEvent a){
                                     if(replaceText.getText().length()==0){
                                         boolean sameReplace = true;
                                         for(PsdButton psd : psds){
@@ -612,6 +645,7 @@ public class CardEdition extends JPanel {
                                             }
                                         }
                                     }
+                                    frame.requestFocusInWindow();
                                 }
                             });
 
@@ -635,6 +669,22 @@ public class CardEdition extends JPanel {
                                     replaceLayer.setText("");
                                 }
                                 public void focusLost(FocusEvent f){
+                                    boolean sameReplaceLayer = true;
+                                    for(PsdButton psd : psds){
+                                        if(psd.selected&&!psd.replaceLayer.equals(tempBtn.replaceLayer)){
+                                            sameReplaceLayer=false;
+                                        }
+                                    }
+                                    if(sameReplaceLayer){
+                                        replaceLayer.setText(tempBtn.replaceLayer);
+                                    }
+                                    else{
+                                        replaceLayer.setText("");
+                                    }
+                                }
+                            });
+                            replaceLayer.addActionListener(new ActionListener(){
+                                public void actionPerformed(ActionEvent a){
                                     if(replaceLayer.getText().length()==0){
                                         boolean sameReplaceLayer = true;
                                         for(PsdButton psd : psds){
@@ -656,6 +706,7 @@ public class CardEdition extends JPanel {
                                             }
                                         }
                                     }
+                                    frame.requestFocusInWindow();
                                 }
                             });
 

@@ -72,10 +72,14 @@ public class Main
     protected static JTextPane detailPane;
     protected static boolean manualTut;
     private static JTabbedPane tPane;
+    private static JPanel edPanel;
+    private static JMenu m2;
     private static CardEdition selectedGroup;
 
     private static ArrayList<CardEdition> editions = new ArrayList<CardEdition>();
     private static int groupNum=1;
+
+    private static File selectedScript;
 
     public static void main(String[] args){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -110,7 +114,241 @@ public class Main
         dragDropPanel.setBounds(0,0,frame.getWidth(),frame.getHeight());
 
         JMenuBar mb = new JMenuBar();
-        final JMenu m1 = new JMenu("File");
+
+        final JMenu m0 = new JMenu("File");
+        final JMenuItem m01 = new JMenuItem("New Script");
+        final JMenuItem m02 = new JMenuItem("Load Script");
+        final JMenuItem m03 = new JMenuItem("Save Script");
+        final JMenuItem m04 = new JMenuItem("Run Script");
+
+        edPanel = new JPanel();
+
+        m01.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                tPane.removeAll();
+                edPanel.removeAll();
+                editions.clear();
+                selectedScript=null;
+            }
+        });
+
+        m02.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                JFileChooser scriptChooser = new JFileChooser(System.getProperty("user.dir")+"/Scripts");
+                scriptChooser.setFileFilter(new FileNameExtensionFilter("jsx files", "jsx"));
+                if(scriptChooser.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
+                    try{
+                        File scriptFile = scriptChooser.getSelectedFile();
+                        tPane.removeAll();
+                        edPanel.removeAll();
+                        editions.clear();
+                        FileReader fr  = new FileReader(scriptFile);
+                        BufferedReader br = new BufferedReader(fr);
+                        String nextLine = br.readLine();
+                        String groupContents = "";
+                        
+                        while(nextLine!=null&&!nextLine.contains("save_location")){
+                            groupContents+=nextLine+"\n";
+                            if(nextLine.contains("editionName")){
+                                selectedGroup = createEdition(nextLine.substring(nextLine.indexOf(":")+1).replace("'", ""));
+                                ArrayList<File> chosenFiles = new ArrayList<>();
+                                for(String psdLine : groupContents.substring(groupContents.indexOf("'psds':"),groupContents.indexOf("editionName")).split("\\n")){
+                                    if(psdLine.contains("'path':")){
+                                        File psdFile = new File(psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'path'"))+1, psdLine.indexOf(",",psdLine.indexOf("'path'"))).replace("'", ""));
+                                        PsdButton tempBtn = new PsdButton(psdFile);
+                                        tempBtn.charLimit=Integer.parseInt(psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'limit'"))+1,psdLine.indexOf(",",psdLine.indexOf("'limit'"))).replace("'",""));
+                                        tempBtn.repString = Boolean.parseBoolean(psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'repString'"))+1,psdLine.indexOf(",",psdLine.indexOf("'repString'"))).replace("'",""));
+                                        tempBtn.repLayer = Boolean.parseBoolean(psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'repLayer'"))+1,psdLine.indexOf(",",psdLine.indexOf("'repLayer'"))).replace("'",""));
+                                        tempBtn.replaceString = psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'replaceWord'"))+1,psdLine.indexOf(",",psdLine.indexOf("'replaceWord'"))).replace("'","");
+                                        tempBtn.replaceLayer = psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'replaceLayer'"))+1,psdLine.indexOf(",",psdLine.indexOf("'replaceLayer'"))).replace("'","");
+                                        tempBtn.saveAs = psdLine.substring(psdLine.indexOf(":",psdLine.indexOf("'saveAs'"))+1,psdLine.indexOf("}",psdLine.indexOf("'saveAs'"))).replace("'","");
+                                        psds.add(tempBtn);
+                                        selectedGroup.addPsds(new PsdButton[]{tempBtn});
+                                    }
+                                }
+
+                                for(String userLine : groupContents.substring(groupContents.indexOf("'users':"), groupContents.indexOf("'psds':")).split("\\n")){
+                                    if(userLine.contains("'names':")){
+                                        String[] names = userLine.substring(userLine.indexOf("[",userLine.indexOf("'names':"))+1,userLine.indexOf("]",userLine.indexOf("'names':"))).replace("'","").split(",");
+                                        CardUser newUser=selectedGroup.createUser(names[0], names[1]);
+                                        String[] cards = userLine.substring(userLine.indexOf("[",userLine.indexOf("cards:"))+1,userLine.indexOf("]",userLine.indexOf("cards:"))).replace("'","").split(",");
+                                        for(String cardName : cards){
+                                            for(PsdButton psd: selectedGroup.getPsds()){
+                                                if(psd.name.equals(cardName)){
+                                                    newUser.cards.add(psd);
+                                                    newUser.model.addElement(psd.name);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        
+                                    }
+                                }
+                                frame.validate();
+                                frame.repaint();
+
+                                groupContents = "";
+                            }
+                            nextLine = br.readLine();
+                        }
+                        
+                        //newUser=selectedGroup.createUser(firstName, secondName);
+                    }
+                    catch(Exception e){
+
+                    }
+                }
+            }
+        });
+
+        m03.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                boolean atLeastOne=false;
+                for(CardEdition group: editions){
+                    if(group.getAddedUsers().size()>0){
+                        for(CardUser u: group.getAddedUsers()){
+                            if(u.model.size()>0){
+                                atLeastOne=true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(atLeastOne){
+                    boolean error=false;
+                    JFileChooser tempSaver = new JFileChooser(new File(System.getProperty("user.dir")).getParentFile());
+                    tempSaver.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    if(tempSaver.showDialog(frame,"Save Location")==JFileChooser.APPROVE_OPTION){
+                        File saveLocation = tempSaver.getSelectedFile();
+                        InputStream in = getClass().getResourceAsStream("rename.jsx");
+                        String fileName = "";
+                        for(int editionIndex = 0; editionIndex<editions.size(); editionIndex++){
+                            if(editionIndex<editions.size()-1){
+                                fileName+=editions.get(editionIndex).getName()+"+";
+                            }
+                            else{
+                                fileName+=editions.get(editionIndex).getName();
+                            }
+                        }
+                        File renameFile = new File("Scripts\\"+fileName+".jsx");
+                        ArrayList<String> renameContents = new ArrayList<String>();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                        boolean addToArray=true;
+                        String newLine = null;
+                        try{
+                            newLine = reader.readLine();
+                        }
+                        catch(IOException e){
+                            error=true;
+                            JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
+                        }
+                        while(newLine!=null&&!error){
+                            if(addToArray || newLine.equals("//start of code")){
+                                renameContents.add(newLine+"\n");
+                                if(newLine.equals("//start of data")){
+                                    addToArray=false;
+                                }
+                                else if(newLine.equals("//start of code")){
+                                    addToArray=true;
+                                }
+                            }
+                            try{
+                                newLine = reader.readLine();
+                            }
+                            catch(IOException e){
+                                error=true;
+                                JOptionPane.showMessageDialog(frame, e, "ReadRenameFileError", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                        try {
+                            reader.close();
+                        } catch (IOException e) {
+                            error=true;
+                            JOptionPane.showMessageDialog(frame, e, "FileReaderCloseError", JOptionPane.ERROR_MESSAGE);
+                        }
+                        if(!error){
+                            ArrayList<String> data = new ArrayList<String>();
+                            data.add("var groups = {\n");
+                            for(int g=0; g<editions.size(); g++){
+                                CardEdition tempED = editions.get(g);
+                                data.add("'"+g+"' : {'users':\n         {\n");
+                                for(int i=0; i<tempED.getAddedUsers().size(); i++){
+                                    CardUser tempUser = tempED.getAddedUsers().get(i);
+                                    String cardInput = "            '"+i+"' : {'names':['"+tempUser.names[0]+"'";
+                                    if(tempUser.names.length>1){
+                                        cardInput+=",'"+tempUser.names[1]+"'";
+                                    }
+                                    cardInput+="],cards:[";
+                                    for(int j=0; j<tempUser.model.size(); j++){
+                                        if(j<tempUser.model.size()-1){
+                                            cardInput+="'"+String.valueOf(tempUser.model.get(j))+"',";
+                                        }
+                                        else{
+                                            cardInput+="'"+String.valueOf(tempUser.model.get(j))+"'";
+                                        }
+                                    }
+                                    cardInput+="]},\n";
+                                    data.add(cardInput);
+                                }
+                                data.add("      }\n      ,'psds':\n       {\n");
+                                for(int p=0; p<tempED.getPsds().size(); p++){
+                                    PsdButton psd = tempED.getPsds().get(p);
+                                    String psdInput;
+                                    psdInput = "            '"+p+"' : {'name':'"+psd.name+"','path':'"+psd.file.getAbsolutePath().replace("\\","\\\\")+"','limit':"+psd.charLimit+",'repString':"+psd.repString+",'replaceWord':'"+psd.replaceString+"','repLayer':"+psd.repLayer+",'replaceLayer':'"+psd.replaceLayer+"','saveAs':'"+psd.saveAs+"'";
+                                    psdInput+="},\n";
+                                    data.add(psdInput);
+                                }
+                                data.add("      }\n     ,'editionName':'"+tempED.getName()+"'\n      },\n");
+                            }
+                            data.add("};\n\n");
+                            String savePath = saveLocation.getAbsolutePath();
+                            data.add("var save_location = '"+savePath.replace("\\","\\\\")+"';\n");
+                            renameContents.addAll(1,data);
+                            FileWriter cmdWriter = null;
+                            try {
+                                cmdWriter = new FileWriter(renameFile);
+                            } catch (IOException e) {
+                                error=true;
+                                JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                            }
+                            if(!error){
+                                for(String line: renameContents){
+                                    try {
+                                        cmdWriter.write(line);
+                                    } catch (IOException e) {
+                                        error=true;
+                                        JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
+                                        break;
+                                    }
+                                }
+                                try {
+                                    cmdWriter.close();
+                                } catch (IOException e) {
+                                    error=true;
+                                    JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                }
+                            }
+                            if(!error){
+                                JOptionPane.showMessageDialog(frame, "Script saved successfully", "Script Notification", JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        m04.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent a){
+                
+            }
+        });
+
+        m0.add(m01);
+        m0.add(m02);
+        m0.add(m03);
+        m0.add(m04);
+
+        final JMenu m1 = new JMenu("Methods");
         final JMenuItem m11= new JMenuItem("Open PSDs");
         final JMenuItem m12= new JMenuItem("Read Webpage");
         
@@ -534,7 +772,7 @@ public class Main
                                         psdInput+="},\n";
                                         data.add(psdInput);
                                     }
-                                    data.add("      }\n     ,'name' : '"+tempED.getName()+"'\n      },\n");
+                                    data.add("      }\n     ,'editionName':'"+tempED.getName()+"'\n      },\n");
                                 }
                                 data.add("};\n\n");
                                 String savePath = saveLocation.getAbsolutePath();
@@ -564,7 +802,6 @@ public class Main
                                         JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
                                     }
                                     if(!error){
-                                        
                                         if(start&&startStep==6){
                                             startStep=7;
                                             stepLabel.setText("Step 7: You're Done!!!");
@@ -614,9 +851,8 @@ public class Main
         m1.add(m12);
         m1.add(m13);
 
-        final JMenu m2 = new JMenu("Editions");
+        m2 = new JMenu("Editions");
         final JMenuItem m21 = new JMenuItem("Add Edition");
-        final JPanel edPanel = new JPanel();
         edPanel.setLayout(new BoxLayout(edPanel, BoxLayout.PAGE_AXIS));
         m21.addActionListener(new ActionListener(){
             @Override
@@ -760,6 +996,7 @@ public class Main
         m5.add(m51);
         m5.add(m52);
 
+        mb.add(m0);
         mb.add(m1);
         mb.add(m2);
         mb.add(m3);
@@ -979,6 +1216,53 @@ public class Main
             System.out.println("Something went wrong. >-<");
         }
     
+    }
+
+    private static CardEdition createEdition(String edName){
+        final CardEdition newEdition = new CardEdition(frame,edName);
+        editions.add(newEdition);
+        tPane.add(newEdition,edName);
+        tPane.setSelectedComponent(newEdition);
+        groupNum++;
+        final JTextField edField = new JTextField(edName);
+        edField.addFocusListener(new FocusListener(){
+            @Override
+            public void focusGained(FocusEvent e) {
+                edField.setText("");
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                String newName = edField.getText();
+                boolean nameExists = false;
+                for(CardEdition ed : editions){
+                    if (ed.getName().equals(newName)){
+                        nameExists=true;
+                        break;
+                    }
+                }
+                if(!nameExists&&newName.length()>0){
+                    newEdition.setName(newName);
+                    tPane.setTitleAt(tPane.getComponentZOrder(newEdition),newName);
+                }
+                else{
+                    edField.setText(newEdition.getName());
+                }
+            }
+        });
+        edField.addMouseListener(new MouseAdapter(){
+            public void mousePressed(java.awt.event.MouseEvent m){
+                if(SwingUtilities.isRightMouseButton(m)){
+                    tPane.remove(newEdition);
+                    edPanel.remove(edField);
+                    m2.getPopupMenu().setVisible(false);
+                    m2.getPopupMenu().updateUI();
+                    m2.getPopupMenu().setVisible(true);
+                }
+            }
+        });
+        edPanel.add(edField);
+        return newEdition;
     }
 
     private static boolean isNumber(String s){
