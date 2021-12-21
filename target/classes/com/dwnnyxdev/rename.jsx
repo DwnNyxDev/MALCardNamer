@@ -4,7 +4,7 @@ var docs = app.documents;
 for(var group in groups){
     var users = groups[group].users;
     var psds = groups[group].psds;
-    var edName = groups[group].name;
+    var edName = groups[group].editionName;
 
     for(var d=0; d<app.documents.length; d++){
         app.documents[d].close(SaveOptions.DONOTSAVECHANGES);
