@@ -95,7 +95,7 @@ public class Main
         frame.setIconImage(new ImageIcon("MAL_Logo.png").getImage());
         frame.setSize((int)(screenWidth*.75),(int)(screenHeight*.75));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //frame.setResizable(false);
+        frame.setResizable(false);
 
         tPane = new JTabbedPane();
         tPane.addChangeListener(new ChangeListener(){
@@ -166,31 +166,44 @@ public class Main
                                         selectedGroup.addPsds(new PsdButton[]{tempBtn});
                                     }
                                 }
-
-                                for(String userLine : groupContents.substring(groupContents.indexOf("'users':"), groupContents.indexOf("'psds':")).split("\\n")){
+                            
+                                String[] userLines = groupContents.substring(groupContents.indexOf("'users':"), groupContents.indexOf("'psds':")).split("\\n");
+                                for(String userLine : userLines){
+                                    //System.out.println(userLine);
                                     if(userLine.contains("'names':")){
                                         String[] names = userLine.substring(userLine.indexOf("[",userLine.indexOf("'names':"))+1,userLine.indexOf("]",userLine.indexOf("'names':"))).replace("'","").split(",");
-                                        CardUser newUser=selectedGroup.createUser(names[0], names[1]);
-                                        String[] cards = userLine.substring(userLine.indexOf("[",userLine.indexOf("cards:"))+1,userLine.indexOf("]",userLine.indexOf("cards:"))).replace("'","").split(",");
-                                        for(String cardName : cards){
-                                            for(PsdButton psd: selectedGroup.getPsds()){
-                                                if(psd.name.equals(cardName)){
-                                                    newUser.cards.add(psd);
-                                                    newUser.model.addElement(psd.name);
-                                                    break;
-                                                }
-                                            }
+                                        CardUser newUser = null;
+                                        if(names.length>1){
+                                            newUser=selectedGroup.createUser(names[0], names[1]);
+                                        }
+                                        else if(names.length==1){
+                                            newUser=selectedGroup.createUser(names[0], null);
                                         }
                                         
+                                        if(newUser!=null){
+                                            String[] cards = userLine.substring(userLine.indexOf("[",userLine.indexOf("cards:"))+1,userLine.indexOf("]",userLine.indexOf("cards:"))).replace("'","").split(","); 
+                                            for(String cardName : cards){
+                                                for(PsdButton psd: selectedGroup.getPsds()){
+                                                    if(psd.name.equals(cardName)){
+                                                        newUser.cards.add(psd);
+                                                        newUser.model.addElement(psd.name);
+                                                        break;
+                                                    }
+                                                }
+                                            }    
+                                        }                      
                                     }
                                 }
                                 frame.validate();
                                 frame.repaint();
+                                
 
                                 groupContents = "";
                             }
+                            
                             nextLine = br.readLine();
                         }
+                        
                         selectedScript = scriptFile;
                     }
                     catch(Exception e){

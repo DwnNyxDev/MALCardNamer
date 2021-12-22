@@ -70,13 +70,15 @@ public class CardEdition extends JPanel {
         buttonPanel = new JPanel(new GridLayout(0,10));
         psdSettingsPanel = new JPanel(new FlowLayout());
         userPanel = new JPanel(new FlowLayout());
-        listedUsersPanel = new JPanel(new GridLayout(4,0));
-        
+        listedUsersPanel = new JPanel(new WrapLayout());
+        listedUsersPanel.addMouseListener(new MouseAdapter(){
+            public void mousePressed(MouseEvent m){
+                frame.requestFocusInWindow();
+            }
+        });
 
         ctrlHeld = false;
         shiftHeld=false;
-    
-        //frame.setResizable(false);
 
         JLabel psdOpenLabel = new JLabel(new ImageIcon(new ImageIcon("OpenPsds.png").getImage().getScaledInstance((int)(frame.getWidth()*.25), -1, Image.SCALE_SMOOTH)));
 
@@ -382,7 +384,10 @@ public class CardEdition extends JPanel {
         
         userPanel.setLayout(new BorderLayout());
         userPanel.add(BorderLayout.NORTH,searchPanel);
-        userPanel.add(BorderLayout.CENTER,listedUsersPanel);
+        JScrollPane userScrollPane = new JScrollPane(listedUsersPanel);
+        userScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        userScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        userPanel.add(BorderLayout.CENTER,userScrollPane);
         
         
         contentPanel.add(BorderLayout.NORTH,psdPanel);
@@ -1015,6 +1020,7 @@ public class CardEdition extends JPanel {
             userPanel = new CardUser(longName);
         }
         addedUsers.add(userPanel);
+        userPanel.setPreferredSize(new Dimension((int)(frame.getWidth()*.1),(int)(frame.getHeight()*.2)));
         listedUsersPanel.add(userPanel);
         TitledBorder nameBorder  = BorderFactory.createTitledBorder(longName);
         nameBorder.setTitleJustification(TitledBorder.CENTER);
