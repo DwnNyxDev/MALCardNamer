@@ -1,4 +1,5 @@
 package com.dwnnyxdev;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionListener;
@@ -26,6 +27,9 @@ import java.awt.GridLayout;
 import java.util.Collections;
 import java.util.List;
 import java.awt.Image;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics;
 
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ChangeEvent;
@@ -52,11 +56,11 @@ import org.apache.commons.io.FileUtils;
  * Write a description of class main here.
  *
  * @author Vandell Vatel
- * @version v1.4.3
+ * @version v1.5.0
  */
 public class Main
 {
-    private static String version = "v1.4.3";
+    private static String version = "v1.5.0";
     private static JFrame frame;
     private static ArrayList<PsdButton> psds = new ArrayList<PsdButton>();
     private static File photoFile;
@@ -75,6 +79,14 @@ public class Main
     private static JPanel edPanel;
     private static JMenu m2;
     private static CardEdition selectedGroup;
+    protected static BufferedImage bg;
+    protected static BufferedImage cursorImg;
+    protected static Image bgGif;
+    protected static double initialFrameWidth;
+    protected static double initialFrameHeight;
+    protected static String theme;
+    protected static boolean ctrlHeld;
+    protected static boolean shiftHeld;
 
     private static ArrayList<CardEdition> editions = new ArrayList<CardEdition>();
     private static int groupNum=1;
@@ -94,8 +106,13 @@ public class Main
         frame = new JFrame("MALCardNamer");
         frame.setIconImage(new ImageIcon("MAL_Logo.png").getImage());
         frame.setSize((int)(screenWidth*.75),(int)(screenHeight*.75));
+        initialFrameHeight = frame.getHeight();
+        initialFrameWidth = frame.getWidth();
+        theme = "default";
+        ctrlHeld = false;
+        shiftHeld=false;
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
+        //frame.setResizable(false);
 
         tPane = new JTabbedPane();
         tPane.addChangeListener(new ChangeListener(){
@@ -104,6 +121,15 @@ public class Main
                 if(tPane.getSelectedIndex()!=-1){
                     selectedGroup=editions.get(tPane.getSelectedIndex());
                 }
+                else{
+                    selectedGroup=null;
+                }
+            }
+        });
+        tPane.addFocusListener(new FocusAdapter(){
+            @Override
+            public void focusGained(FocusEvent e) {
+                frame.requestFocusInWindow();
             }
         });
         frame.add(tPane);
@@ -129,6 +155,7 @@ public class Main
                 edPanel.removeAll();
                 editions.clear();
                 selectedScript=null;
+                selectedGroup=null;
             }
         });
 
@@ -139,9 +166,6 @@ public class Main
                 if(scriptChooser.showOpenDialog(frame)==JFileChooser.APPROVE_OPTION){
                     try{
                         File scriptFile = scriptChooser.getSelectedFile();
-                        tPane.removeAll();
-                        edPanel.removeAll();
-                        editions.clear();
                         FileReader fr  = new FileReader(scriptFile);
                         BufferedReader br = new BufferedReader(fr);
                         String nextLine = br.readLine();
@@ -150,7 +174,16 @@ public class Main
                         while(nextLine!=null&&!nextLine.contains("save_location")){
                             groupContents+=nextLine+"\n";
                             if(nextLine.contains("editionName")){
-                                selectedGroup = createEdition(nextLine.substring(nextLine.indexOf(":")+1).replace("'", ""));
+                                String editionName = nextLine.substring(nextLine.indexOf(":")+1).replace("'", "");
+                                for(int index=0; index<editions.size(); index++){
+                                    CardEdition edition = editions.get(index);
+                                    if(edition.getName().equals(editionName)){
+                                        tPane.remove(index);
+                                        edPanel.remove(index);
+                                        editions.remove(edition);
+                                    }
+                                }
+                                selectedGroup = createEdition(editionName);
                                 ArrayList<File> chosenFiles = new ArrayList<>();
                                 for(String psdLine : groupContents.substring(groupContents.indexOf("'psds':"),groupContents.indexOf("editionName")).split("\\n")){
                                     if(psdLine.contains("'path':")){
@@ -360,6 +393,37 @@ public class Main
                                         }
                                     }
                                 }
+                                else{
+                                    FileWriter cmdWriter = null;
+                                        try {
+                                            cmdWriter = new FileWriter(renameFile);
+                                        } catch (IOException e) {
+                                            error=true;
+                                            JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                                        }
+                                        
+                                        
+                                        if(!error){
+                                            for(String line: renameContents){
+                                                try {
+                                                    cmdWriter.write(line);
+                                                } catch (IOException e) {
+                                                    error=true;
+                                                    JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
+                                                    break;
+                                                }
+                                            }
+                                            try {
+                                                cmdWriter.close();
+                                            } catch (IOException e) {
+                                                error=true;
+                                                JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                            }
+                                        }
+                                        if(!error){
+                                            JOptionPane.showMessageDialog(frame, "Script saved successfully", "Script Notification", JOptionPane.INFORMATION_MESSAGE);
+                                        }
+                                }
                                 
                             }
                             catch(IOException e){
@@ -389,7 +453,7 @@ public class Main
         
         m12.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
-                if(selectedGroup.getPsds().size()>0){
+                if(selectedGroup!=null&&selectedGroup.getPsds().size()>0){
                     final JDialog dialog = new JDialog(frame,"Topic Contents",true);
                     final JTextField cln = new JTextField("Cards",15);
                     cln.setHorizontalAlignment(JTextField.CENTER);
@@ -711,7 +775,7 @@ public class Main
                     dialog.setVisible(true);
                 }
                 else{
-                    JOptionPane.showMessageDialog(frame, "Please open some psds first!", "No PSDs Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame, "Please create an edition with some psds first!", "No PSDs Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -901,6 +965,37 @@ public class Main
                                         }
                                     }
                                 }
+                                else{
+                                    FileWriter cmdWriter = null;
+                                        try {
+                                            cmdWriter = new FileWriter(renameFile);
+                                        } catch (IOException e) {
+                                            error=true;
+                                            JOptionPane.showMessageDialog(frame, e, "FileWriterCreationError", JOptionPane.ERROR_MESSAGE);
+                                        }
+                                        
+                                        
+                                        if(!error){
+                                            for(String line: renameContents){
+                                                try {
+                                                    cmdWriter.write(line);
+                                                } catch (IOException e) {
+                                                    error=true;
+                                                    JOptionPane.showMessageDialog(frame, e, "FileWriterWritingError", JOptionPane.ERROR_MESSAGE);
+                                                    break;
+                                                }
+                                            }
+                                            try {
+                                                cmdWriter.close();
+                                            } catch (IOException e) {
+                                                error=true;
+                                                JOptionPane.showMessageDialog(frame, e, "FileWriterCloseError", JOptionPane.ERROR_MESSAGE);
+                                            }
+                                        }
+                                        if(!error){
+                                            JOptionPane.showMessageDialog(frame, "Script saved successfully", "Script Notification", JOptionPane.INFORMATION_MESSAGE);
+                                        }
+                                }
                             }
                             catch(Exception e){
 
@@ -932,49 +1027,7 @@ public class Main
                         }
                     }
                     if(!nameExists){
-                        final CardEdition newEdition = new CardEdition(frame,edName);
-                        editions.add(newEdition);
-                        tPane.add(newEdition,edName);
-                        tPane.setSelectedComponent(newEdition);
-                        groupNum++;
-                        final JTextField edField = new JTextField(edName);
-                        edField.addFocusListener(new FocusListener(){
-                            @Override
-                            public void focusGained(FocusEvent e) {
-                                edField.setText("");
-                            }
-
-                            @Override
-                            public void focusLost(FocusEvent e) {
-                                String newName = edField.getText();
-                                boolean nameExists = false;
-                                for(CardEdition ed : editions){
-                                    if (ed.getName().equals(newName)){
-                                        nameExists=true;
-                                        break;
-                                    }
-                                }
-                                if(!nameExists&&newName.length()>0){
-                                    newEdition.setName(newName);
-                                    tPane.setTitleAt(tPane.getComponentZOrder(newEdition),newName);
-                                }
-                                else{
-                                    edField.setText(newEdition.getName());
-                                }
-                            }
-                        });
-                        edField.addMouseListener(new MouseAdapter(){
-                            public void mousePressed(java.awt.event.MouseEvent m){
-                                if(SwingUtilities.isRightMouseButton(m)){
-                                    tPane.remove(newEdition);
-                                    edPanel.remove(edField);
-                                    m2.getPopupMenu().setVisible(false);
-                                    m2.getPopupMenu().updateUI();
-                                    m2.getPopupMenu().setVisible(true);
-                                }
-                            }
-                        });
-                        edPanel.add(edField);
+                        final CardEdition newEdition = createEdition(edName);
                         if(start&&startStep==1){
                             startStep=2;
                             m2.setEnabled(false);
@@ -1037,20 +1090,7 @@ public class Main
         m4.add(m42);
 
         final JMenu m5 = new JMenu("Photoshop");
-        final JLabel m51 = new JLabel("aaa");
-        m51.setPreferredSize(new Dimension(400,(int)m51.getPreferredSize().getHeight()));
-        m51.addMouseListener(new MouseAdapter(){
-            public void mouseEntered(MouseEvent e){
-                if(photoFile!=null){
-                    m51.setText(photoFile.getParentFile().getAbsolutePath());
-                }
-            }
-            public void mouseExited(MouseEvent e){
-                if(photoFile!=null){
-                    m51.setText(photoFile.getParentFile().getName());
-                }
-            }
-        });
+        final JLabel m51 = new JLabel();
         final JButton m52 = new JButton("Change Photoshop Program");
         m52.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
@@ -1061,11 +1101,84 @@ public class Main
         m5.add(m51);
         m5.add(m52);
 
+        final JMenu m6 = new JMenu("Themes");
+        ButtonGroup buttonGroup = new ButtonGroup();
+        final JCheckBox m61 = new JCheckBox("Default",true);
+        final JCheckBox m62 = new JCheckBox("Darkula");
+        final JCheckBox m63 = new JCheckBox("Christmas");
+        buttonGroup.add(m61);
+        buttonGroup.add(m62);
+        buttonGroup.add(m63);
+        ToolTipManager.sharedInstance().setInitialDelay(0);
+        ToolTipManager.sharedInstance().setDismissDelay(1500);
+        m61.addItemListener(new ItemListener(){
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if(e.getStateChange()==ItemEvent.SELECTED){
+                    theme = "default";
+                    bg = null;
+                    cursorImg = null;
+                    bgGif = null;
+                    frame.setCursor(null);
+                    for(CardEdition edition : editions){
+                        edition.updateTheme();
+                    }
+                    frame.validate();
+                    frame.repaint();
+                }
+            }
+        });
+        m62.addItemListener(new ItemListener(){
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if(e.getStateChange()==ItemEvent.SELECTED){
+                    theme = "darkula";
+                    bg = null;
+                    cursorImg = null;
+                    bgGif = null;
+                    frame.setCursor(null);
+                    for(CardEdition edition : editions){
+                        edition.updateTheme();
+                    }
+                    frame.validate();
+                    frame.repaint();
+                }
+            }
+        });
+        m63.addItemListener(new ItemListener(){
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if(e.getStateChange()==ItemEvent.SELECTED){
+                    try{
+                        bg = ImageIO.read(new URL("https://i.ibb.co/8N5VJRK/pexels-photo-1303098.jpg"));
+                        cursorImg = ImageIO.read(new URL("https://i.ibb.co/c8vmRr3/christmastreecursor2.png"));
+                        bgGif = new ImageIcon(new URL("https://img1.picmix.com/output/stamp/normal/6/0/1/6/1556106_f227e.gif")).getImage();
+                        frame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0,0), "christmas tree cursor"));
+                        theme = "christmas";
+                        for(CardEdition edition : editions){
+                            edition.updateTheme();
+                        }
+                        frame.validate();
+                        frame.repaint();
+                    }
+                    catch (Exception ex){
+                        JOptionPane.showMessageDialog(frame, "Failed to load the christmas theme ;-;", "Background Error", JOptionPane.ERROR_MESSAGE);
+                        m61.setSelected(true);
+                    }
+                }
+            }
+        });
+        m63.setToolTipText("requires internet connection");
+        m6.add(m61);
+        m6.add(m62);
+        m6.add(m63);
+
         mb.add(m0);
         mb.add(m1);
         mb.add(m2);
         mb.add(m4);
         mb.add(m5);
+        mb.add(m6);
         mb.add(m3);
 
         frame.add(BorderLayout.NORTH,mb);
@@ -1076,7 +1189,70 @@ public class Main
             }
         });
 
+        frame.addWindowFocusListener(new WindowAdapter(){
+            public void windowGainedFocus(WindowEvent w){
+                frame.validate();
+                frame.repaint();
+            }
+            public void windowLostFocus(WindowEvent w){
+                ctrlHeld=false;
+                shiftHeld=false;
+            }
+        });
+
+        frame.addKeyListener(new KeyAdapter(){
+            public void keyPressed(KeyEvent k){
+                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&!ctrlHeld){
+                    ctrlHeld=true;
+                }
+                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&!shiftHeld){
+                    shiftHeld=true;
+                }
+                else if(ctrlHeld){
+                    if(k.getKeyCode()==KeyEvent.VK_N){
+                        if(shiftHeld){
+                            m13.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                        }
+                        else{
+                            m01.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                        }
+                    }
+                    else if(k.getKeyCode()==KeyEvent.VK_L){
+                        m02.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                    }
+                    else if(k.getKeyCode()==KeyEvent.VK_S){
+                        m03.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                    }
+                    else if(k.getKeyCode()==KeyEvent.VK_O){
+                        m11.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                    }
+                    else if(k.getKeyCode()==KeyEvent.VK_R){
+                        m12.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                    }
+                    else if(k.getKeyCode()==KeyEvent.VK_E){
+                        m21.getActionListeners()[0].actionPerformed(new ActionEvent(this,ActionEvent.ACTION_PERFORMED,null));
+                    }
+                }
+            }
+            public void keyReleased(KeyEvent k){
+                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&ctrlHeld){
+                    ctrlHeld=false;
+                }
+                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&shiftHeld){
+                    shiftHeld=false;
+                }
+            }
+        });
+        m01.setToolTipText("CTRL + N");
+        m02.setToolTipText("CTRL + L");
+        m03.setToolTipText("CTRL + S");
+        m11.setToolTipText("CTRL + O");
+        m12.setToolTipText("CTRL + R");
+        m13.setToolTipText("CTRL + Shift + N");
+        m21.setToolTipText("CTRL + E");
+
         frame.setVisible(true);
+        //frame.requestFocusInWindow();
         m11.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent a){
                 if(editions.size()>0){
@@ -1122,7 +1298,7 @@ public class Main
                             chosenNames.add(f.getName());
                         }
                         if(!start||(start&&chosenNames.contains("1.psd")&&chosenNames.contains("2.psd")&&chosenNames.contains("3.psd"))){
-                            
+                        
                             PsdButton[] psdBtns  = new PsdButton[chosenFiles.size()];
                             for(int f=0; f<chosenFiles.size(); f++){
                                 psdBtns[f]=new PsdButton(chosenFiles.get(f));
@@ -1181,6 +1357,7 @@ public class Main
                     startStep=1;
                     tPane.removeAll();
                     editions.clear();
+                    selectedGroup=null;
                     edPanel.removeAll();
                     m0.setEnabled(false);
                     m1.setEnabled(false);
@@ -1226,6 +1403,7 @@ public class Main
                             tPane.removeAll();
                             edPanel.removeAll();
                             editions.clear();
+                            selectedGroup=null;
                         }
                         public void windowClosed(WindowEvent w){
                             start=false;
@@ -1242,14 +1420,14 @@ public class Main
                             tPane.removeAll();
                             edPanel.removeAll();
                             editions.clear();
+                            selectedGroup=null;
                         }
                     });
 
                 }
             }
         });  
-        
-       
+          
        saveData = new File("saveData.txt");
        try{
            saveData.createNewFile();
@@ -1279,11 +1457,11 @@ public class Main
                 }
             }
             m51.setText(photoFile.getParentFile().getName());
+            m51.setToolTipText(photoFile.getParentFile().getAbsolutePath());
 
         } catch(IOException e){
             System.out.println("Something went wrong. >-<");
         }
-    
     }
 
     private static CardEdition createEdition(String edName){
@@ -1323,6 +1501,13 @@ public class Main
                 if(SwingUtilities.isRightMouseButton(m)){
                     tPane.remove(newEdition);
                     edPanel.remove(edField);
+                    editions.remove(newEdition);
+                    if(tPane.getSelectedIndex()!=-1){
+                        selectedGroup=editions.get(tPane.getSelectedIndex());
+                    }
+                    else{
+                        selectedGroup=null;
+                    }
                     m2.getPopupMenu().setVisible(false);
                     m2.getPopupMenu().updateUI();
                     m2.getPopupMenu().setVisible(true);

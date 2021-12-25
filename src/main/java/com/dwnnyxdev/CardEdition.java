@@ -1,11 +1,17 @@
 package com.dwnnyxdev;
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionListener;
 
 import java.io.*;
+import java.net.URL;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.metal.MetalBorders;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -28,6 +34,9 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics;
+import java.awt.Component;
 
 import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
@@ -46,10 +55,9 @@ public class CardEdition extends JPanel {
     private JPanel listedUsersPanel;
     private ArrayList<String> savedUsers;
     private ArrayList<CardUser> addedUsers;
-    private static boolean ctrlHeld;
-    private static boolean shiftHeld;
     private int lastSelectedIndex = 0;
     private String name;
+    
     
 
     public CardEdition(JFrame frameIn, String nameIn){
@@ -70,15 +78,18 @@ public class CardEdition extends JPanel {
         buttonPanel = new JPanel(new GridLayout(0,10));
         psdSettingsPanel = new JPanel(new FlowLayout());
         userPanel = new JPanel(new FlowLayout());
-        listedUsersPanel = new JPanel(new WrapLayout());
+        listedUsersPanel = new JPanel(new WrapLayout()){
+            public void paintComponent(Graphics g){
+                super.paintComponent(g);
+                g.drawImage(Main.bg, 0, 0, getWidth(),getHeight(),this);
+                g.drawImage(Main.bgGif,0,0,getWidth(),getHeight(),this);
+            }
+        };
         listedUsersPanel.addMouseListener(new MouseAdapter(){
             public void mousePressed(MouseEvent m){
                 frame.requestFocusInWindow();
             }
         });
-
-        ctrlHeld = false;
-        shiftHeld=false;
 
         JLabel psdOpenLabel = new JLabel(new ImageIcon(new ImageIcon("OpenPsds.png").getImage().getScaledInstance((int)(frame.getWidth()*.25), -1, Image.SCALE_SMOOTH)));
 
@@ -393,42 +404,6 @@ public class CardEdition extends JPanel {
         contentPanel.add(BorderLayout.NORTH,psdPanel);
         contentPanel.add(BorderLayout.CENTER,userPanel);
         this.add(BorderLayout.CENTER,contentPanel);
-        frame.addMouseListener(new MouseAdapter(){
-            public void mousePressed(MouseEvent m){
-                frame.requestFocusInWindow();
-            }
-        });
-        
-        frame.addWindowFocusListener(new WindowAdapter(){
-            public void windowGainedFocus(WindowEvent w){
-                frame.validate();
-                frame.repaint();
-            }
-            public void windowLostFocus(WindowEvent w){
-                ctrlHeld=false;
-                shiftHeld=false;
-            }
-        });
-
-        frame.addKeyListener(new KeyAdapter(){
-            public void keyPressed(KeyEvent k){
-                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&!ctrlHeld){
-                    ctrlHeld=true;
-                }
-                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&!shiftHeld){
-                    shiftHeld=true;
-                }
-            }
-            public void keyReleased(KeyEvent k){
-                if(k.getKeyCode()==KeyEvent.VK_CONTROL&&ctrlHeld){
-                    ctrlHeld=false;
-                }
-                else if(k.getKeyCode()==KeyEvent.VK_SHIFT&&shiftHeld){
-                    shiftHeld=false;
-                }
-            }
-        });
-        frame.setVisible(true);
     }
 
     public void addPsds(PsdButton[] newPsds){
@@ -448,35 +423,35 @@ public class CardEdition extends JPanel {
                         psdSettingsPanel.removeAll();
                         psdSettingsPanel.setVisible(false);
                         if(tempBtn.selected){
-                            tempBtn.setBackground(null);
                             tempBtn.selected=false;
+                            updateTheme();
                         }
                         else if(!tempBtn.selected){
-                            if(!ctrlHeld){
+                            if(!Main.ctrlHeld){
                                 for(PsdButton psd : psds){
                                     if(psd.selected){
-                                        psd.setBackground(null);
                                         psd.selected=false;
+                                        updateTheme();
                                     }
                                 }
                             }
                             int currIndex = psds.indexOf(tempBtn);
-                            if(shiftHeld){
+                            if(Main.shiftHeld){
                                 if(currIndex<lastSelectedIndex){
                                     for(int i=currIndex; i<=lastSelectedIndex; i++){
                                         psds.get(i).selected=true;
-                                        psds.get(i).setBackground(Color.cyan);
                                     }
+                                    updateTheme();
                                 }
                                 else{
                                     for(int i=lastSelectedIndex; i<=currIndex; i++){
                                         psds.get(i).selected=true;
-                                        psds.get(i).setBackground(Color.cyan);
                                     }
+                                    updateTheme();
                                 }
                             }
-                            tempBtn.setBackground(Color.cyan);
                             tempBtn.selected=true;
+                            updateTheme();
                             lastSelectedIndex=currIndex;
                         }
                         ArrayList<PsdButton> selectedPsds = new ArrayList<PsdButton>();
@@ -973,12 +948,85 @@ public class CardEdition extends JPanel {
         }
         for(PsdButton psd: psds){
             psd.selected=false;
-            psd.setBackground(null);
         }
+        updateTheme();
         psdPanel.removeAll();
         psdSettingsPanel.setVisible(false);
         psdPanel.add(BorderLayout.CENTER,buttonPanel);
         psdPanel.add(BorderLayout.SOUTH,psdSettingsPanel);
+    }
+
+    public void updateTheme(){
+        if(Main.theme.equals("default")){
+            listedUsersPanel.setBackground(null);
+            for(PsdButton psd: psds){
+                if(!psd.selected){
+                    psd.setBackground(null);
+                }
+                else{
+                    psd.setBackground(Color.cyan);
+                }
+                psd.setForeground(Color.black);
+            }
+            for(CardUser userPanel: addedUsers){
+                userPanel.setBackground(null);
+                userPanel.cardList.setBackground(Color.white);
+                TitledBorder titleBorder = BorderFactory.createTitledBorder(userPanel.names[0]);
+                titleBorder.setTitleJustification(TitledBorder.CENTER);
+                userPanel.setBorder(titleBorder);
+            }
+        }
+        else if(Main.theme.equals("darkula")){
+            listedUsersPanel.setBackground(Color.darkGray);
+            for(PsdButton psd: psds){
+                if(!psd.selected){
+                    psd.setBackground(Color.gray);
+                }
+                else{
+                    psd.setBackground(new Color(205,0,205));
+                }
+                psd.setForeground(Color.white);
+            }
+            for(CardUser userPanel: addedUsers){
+                userPanel.setBackground(null);
+                userPanel.cardList.setBackground(Color.gray);
+                TitledBorder titleBorder = new TitledBorder(new LineBorder(new Color(255,0,255,125),1,false),userPanel.names[0]);
+                titleBorder.setTitleJustification(TitledBorder.CENTER);
+                titleBorder.setTitleColor(Color.white);
+                userPanel.setBorder(titleBorder);
+            }
+        }
+        else if(Main.theme.equals("christmas")){
+            listedUsersPanel.setBackground(null);
+            for(PsdButton psd: psds){
+                if(!psd.selected){
+                    if(psds.indexOf(psd)%2==0){
+                        psd.setBackground(new Color(205,0,0));
+                    }
+                    else{
+                        psd.setBackground(new Color(0,205,0));
+                    }
+                }
+                else{
+                    psd.setBackground(Color.cyan);
+                }
+                psd.setForeground(Color.black);
+            }
+            for(CardUser userPanel: addedUsers){
+                userPanel.setBackground(new Color(212,175,55,175));
+                userPanel.cardList.setBackground(Color.white);
+                LineBorder colorBorder;
+                if(addedUsers.indexOf(userPanel)%2==0){
+                    colorBorder = new LineBorder(new Color(0,255,0),2,true);
+                }
+                else{
+                    colorBorder = new LineBorder(new Color(255,0,0),2,true);
+                }
+                TitledBorder titleBorder = new TitledBorder(colorBorder,userPanel.names[0]);
+                titleBorder.setTitleJustification(TitledBorder.CENTER);
+                userPanel.setBorder(titleBorder);
+            }    
+        }
     }
 
     private static boolean isNumber(String s){
@@ -1020,9 +1068,10 @@ public class CardEdition extends JPanel {
             userPanel = new CardUser(longName);
         }
         addedUsers.add(userPanel);
-        userPanel.setPreferredSize(new Dimension((int)(frame.getWidth()*.1),(int)(frame.getHeight()*.2)));
+        userPanel.setPreferredSize(new Dimension((int)(Main.initialFrameWidth*.1),(int)(Main.initialFrameHeight*.2)));
         listedUsersPanel.add(userPanel);
-        TitledBorder nameBorder  = BorderFactory.createTitledBorder(longName);
+        TitledBorder nameBorder = nameBorder = BorderFactory.createTitledBorder(longName);
+        
         nameBorder.setTitleJustification(TitledBorder.CENTER);
         userPanel.setBorder(nameBorder);
         userPanel.cardList.addPropertyChangeListener(new PropertyChangeListener(){
@@ -1058,12 +1107,14 @@ public class CardEdition extends JPanel {
             public void mousePressed(MouseEvent m){
                 if(SwingUtilities.isRightMouseButton(m)&&!Main.start){
                     addedUsers.remove(finalPanel);
+                    updateTheme();
                     listedUsersPanel.remove(finalPanel);
                     frame.validate();
                     frame.repaint();
                 }
             }
         });
+        updateTheme();
         frame.validate();
         frame.repaint();
         return userPanel;
